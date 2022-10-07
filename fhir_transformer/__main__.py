@@ -25,7 +25,7 @@ def watch_folder(folder_path: Path):
         print(f'Stop watching {folder_path} folder')
 
 def check_job_folder(folder_path: Path):
-    sub_paths = list(filter(lambda sp: sp.is_dir, list(folder_path.glob("*"))))
+    sub_paths = list(filter(lambda sp: sp.is_dir, list(folder_path.glob("**"))))
     if len(sub_paths) == 0:
         return
     else:

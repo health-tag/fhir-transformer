@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
+
+load_dotenv(".env")
 
 hospital_blockchain_address = os.getenv('HOSPITAL_BLOCK_CHAIN_ADDRESS')
 hospital_name_43folders = os.getenv('HOSPITAL_NAME_FOR_43FOLDERS')
