@@ -45,10 +45,10 @@ options:
 #### แบบคอยดู
 ให้รัน `python -m fhir_transformer --watch` จะขึ้น
 ```commandline
-❯ python -m fhir_transformer --watch-mode                  
+❯ python -m fhir_transformer --watch               
 **********************************
 * HealthTAG FHIR Transformer 2.2 *
-*        6 Octorber 2022         *
+*        8 Octorber 2022         *
 *         healthtag.io           *
 *      support@healthtag.io      *
 **********************************
@@ -65,6 +65,6 @@ Watching workingdir folder for any changes
         |-- billtransXXXXXXXX.txt
         |-- csop
 ```
-3. เมื่อทำงานเสร็จใน Folder นั้นจะเกิดไฟล์ชื่อ `result.json` เพื่อให้สามารถดูผลลัพธ์การส่ง FHIR Resource ไปยัง FHIR Server
+3. เมื่อทำงานเสร็จใน Folder นั้นจะเกิดไฟล์ชื่อ `result.json` เพื่อให้สามารถดูผลลัพธ์การส่ง FHIR Resource ไปยัง FHIR Server `log.txt` เพื่อดู stdout และ `done` หรือ `error`
 ### Docker image
-อยู่ระหว่างการเตรียมการ
+[https://hub.docker.com/repository/docker/healthtag/fhir-transformer](https://hub.docker.com/repository/docker/healthtag/fhir-transformer)
