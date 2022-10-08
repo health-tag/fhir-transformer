@@ -71,5 +71,5 @@ Watching workingdir folder for any changes
 [https://hub.docker.com/repository/docker/healthtag/fhir-transformer](https://hub.docker.com/repository/docker/healthtag/fhir-transformer)
 
 # Created by / สร้างโดย
-[Suttisak, MD. นพ.สุทธิศักดิ์](https://doctortons.com)
-[Wara, วรา](https://github.com/BabyThor)
+- [Suttisak, MD. นพ.สุทธิศักดิ์](https://doctortons.com)
+- [Wara, วรา](https://github.com/BabyThor)
