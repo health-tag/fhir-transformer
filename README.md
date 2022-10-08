@@ -69,3 +69,7 @@ Watching workingdir folder for any changes
 3. เมื่อทำงานเสร็จใน Folder นั้นจะเกิดไฟล์ชื่อ `result.json` เพื่อให้สามารถดูผลลัพธ์การส่ง FHIR Resource ไปยัง FHIR Server `log.txt` เพื่อดู stdout และ `done` หรือ `error`
 ### Docker image
 [https://hub.docker.com/repository/docker/healthtag/fhir-transformer](https://hub.docker.com/repository/docker/healthtag/fhir-transformer)
+
+# Created by / สร้างโดย
+[Suttisak, MD. นพ.สุทธิศักดิ์](https://doctortons.com)
+[Wara, วรา](https://github.com/BabyThor)
