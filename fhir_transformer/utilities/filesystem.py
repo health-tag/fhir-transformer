@@ -3,7 +3,7 @@ from pathlib import Path
 
 import jsonpickle
 from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED
-from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver
 
 from fhir_transformer.csop.processor import process
 from fhir_transformer.utilities.logging import Tee
@@ -65,11 +65,11 @@ class Handler(FileSystemEventHandler):
 
 class WorkingDirWatcher:
     def __init__(self, directory: Path):
-        self.observer = Observer()
+        self.observer = PollingObserver()
         self.watchDirectory = directory
 
     def start(self):
-        self.observer = Observer()
+        self.observer = PollingObserver()
         event_handler = Handler()
         self.observer.schedule(event_handler, str(self.watchDirectory), recursive=True)
         self.observer.start()
