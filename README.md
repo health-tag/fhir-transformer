@@ -29,22 +29,21 @@ pipenv shell
 จากนั้นสามารถรันได้สองวิธีคือ **คอยดู Folder** กับ **ระบุ Folder**
 ```commandline
 ❯ python -m fhir_transformer -h                            
-usage: __main__.py [-h] [--watch-mode] [--type {csop,43folders}] [--name FOLDER_NAME]
+usage: __main__.py [-h] [--watch] [--type {csop,43folders}] [--name FOLDER_NAME]
 
 HealthTAG FHIR Transformer
 
 options:
-  -h, --help            show this help message and exit
-  --watch-mode          Use watch mode. Please read the manual to understand how to use this mode
-  --type {csop,43folders}
-                        Specify processing type.
-  --name FOLDER_NAME    Specify name of folder inside "workingdir" folder
+  -h, --help              show this help message and exit
+  --watch                 Use watch mode. Please read the manual to understand how to use this mode
+  --type {csop,43folders} Specify processing type.
+  --name FOLDER_NAME      Specify name of folder inside "workingdir" folder
 ```
 #### แบบระบุ Folder
 ให้ใส่ parameter เช่น `python -m fhir_transformer --type csop --name 2022_10_06` จากนั้นโปรแกรมจะทำตามคำสั่ง
 
 #### แบบคอยดู
-ให้รัน `python -m fhir_transformer --watch-mode` จะขึ้น
+ให้รัน `python -m fhir_transformer --watch` จะขึ้น
 ```commandline
 ❯ python -m fhir_transformer --watch-mode                  
 **********************************

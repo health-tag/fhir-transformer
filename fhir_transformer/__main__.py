@@ -42,7 +42,7 @@ def check_job_folder(folder_path: Path):
 if __name__ == '__main__':
     banner()
     parser = argparse.ArgumentParser(description='HealthTAG FHIR Transformer')
-    parser.add_argument('--watch-mode', dest='watch_mode', action='store_true',
+    parser.add_argument('--watch', dest='watch_mode', action='store_true',
                         help='Use watch mode. Please read the manual to understand how to use this mode')
 
     parser.add_argument('--type', dest='processing_type', action='store',
