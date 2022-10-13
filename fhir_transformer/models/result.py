@@ -8,6 +8,7 @@ class EntryResult:
     description: str
     status: Optional[str] = None
     location: Optional[str] = None
+    error_fhir_response = None
 
 @dataclass
 class BundleResult:

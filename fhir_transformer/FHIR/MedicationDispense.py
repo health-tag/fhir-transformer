@@ -1,32 +1,37 @@
 from fhir_transformer.FHIR.Base import FHIRResource
+from fhir_transformer.FHIR.Encounter import Encounter, EncounterDispensing
 from fhir_transformer.FHIR.Entry import Entry
+from fhir_transformer.FHIR.Organization import Organization
+from fhir_transformer.FHIR.Patient import Patient
+from fhir_transformer.FHIR.Practitioner import Practitioner
+from fhir_transformer.FHIR.supports.support import Builder, Identifier, Coding
+from fhir_transformer.csop.holder.billdisp import DispensingItemDetailRow, DispensingItemRow
 from fhir_transformer.mapping_keys.csop import disp_status_mapping
 
 
 class MedicationDispense(FHIRResource):
-    def __init__(self, disp_id: str, disp_status: str, local_drug_id: str, standard_drug_id: str, product_cat: str,
-                 dfs: str,
-                 quantity: str, package_size: str, disp_date: str,
-                 instruction_text: str, instruction_code: str,
-                 belonged_to_hospital_number: str, hospital_code: str, hospital_blockchain_address: str):
-        super(MedicationDispense, self).__init__(resource_type="MedicationDispense")
+    def __getstate__(self):
+        return super().__getstate__()
 
-        self._disp_id = disp_id
-        self._disp_status = disp_status
-        self._local_drug_id = local_drug_id
-        self._standard_drug_id = standard_drug_id
-        self._product_cat = product_cat
-        self._dfs = dfs
-        self._quantity = quantity
-        self._package_size = package_size
-        self._instruction_text = instruction_text
-        self._instruction_code = instruction_code
-        self.category = MedicationDispense.category
-        self.whenHandedOver = disp_date
+    def __init__(self):
+        super().__init__(resource_type="MedicationDispense")
+        self._disp_id: str | None = None
+        self._disp_status: str | None = None
+        self._local_drug_id: str | None = None
+        self._standard_drug_id: str | None = None
+        self._product_cat: str | None = None
+        self._dfs: str | None = None
+        self._quantity: str | None = None
+        self._package_size: str | None = None
+        self._instruction_text: str | None = None
+        self._instruction_code: str | None = None
+        self.whenHandedOver: str | None = None
 
-        self._belonged_to_hospital_number = belonged_to_hospital_number
-        self._hospital_code = hospital_code
-        self._hospital_blockchain_address = hospital_blockchain_address
+        self._patient_hospital_number: str | None = None
+
+        self.performer = list[dict[str, dict[str, str]]]()
+        self._patientURL: str | None = None
+        self._encounterURL: str | None = None
 
     def create_entry(self) -> Entry:
         entry = Entry(f"MedicationDispense/{self._disp_id}|{self._local_drug_id}", self, {
@@ -36,14 +41,14 @@ class MedicationDispense(FHIRResource):
         })
         return entry
 
-    def __getstate__(self):
-        return super().__getstate__()
+    def get_resource_url(self) -> str:
+        return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
 
     @property
     def text(self) -> dict[str, str]:
         return {
             "status": "extensions",
-            "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\">Dispense ID: {self._disp_id} (HN: {self._belonged_to_hospital_number})<p>{self._dfs} - {self._instruction_text}</p><p>QTY: {self._quantity} {self._package_size}</p></div>"
+            "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\">Dispense ID: {self._disp_id} (HN: {self._patient_hospital_number})<p>{self._dfs} - {self._instruction_text}</p><p>QTY: {self._quantity} {self._package_size}</p></div>"
         }
 
     @property
@@ -63,13 +68,8 @@ class MedicationDispense(FHIRResource):
         ]
 
     @property
-    def identifier(self) -> list[dict[str, str | dict[str, str]]]:
-        return [
-            {
-                "system": "https://sil-th.org/CSOP/dispenseId",
-                "value": f"{self._disp_id}"
-            }
-        ]
+    def identifier(self) -> list[Identifier]:
+        return [Identifier("https://sil-th.org/CSOP/dispenseId", f"{self._disp_id}")]
 
     @property
     def status(self) -> str:
@@ -87,40 +87,22 @@ class MedicationDispense(FHIRResource):
     @property
     def medicationCodeableConcept(self) -> dict[str, str]:
         return {
-            "coding": [
-                {
-                    "system": "https://sil-th.org/CSOP/localCode",
-                    "code": f"{self._local_drug_id}"
-                },
-                {
-                    "system": "https://tmt.this.or.th",
-                    "code": f"{self._standard_drug_id}"
-                }
-            ],
+            "coding": [Coding("https://sil-th.org/CSOP/localCode", self._local_drug_id),
+                       Coding("https://tmt.this.or.th", self._standard_drug_id)],
             "text": f"{self._dfs}"
         }
 
     @property
     def subject(self) -> dict[str, str]:
         return {
-            "reference": f"Patient?identifier=https://sil-th.org/CSOP/hn|{self._belonged_to_hospital_number}",
+            "reference": self._patientURL
         }
 
     @property
     def context(self) -> dict[str, str]:
         return {
-            "reference": f"Encounter?identifier=https://sil-th.org/CSOP/dispenseId|{self._disp_id}"
+            "reference": self._encounterURL
         }
-
-    @property
-    def performer(self) -> list[dict[str, dict[str, str]]]:
-        return [
-            {
-                "actor": {
-                    "reference": f"Organization/{self._hospital_blockchain_address}"
-                }
-            }
-        ]
 
     @property
     def quantity(self) -> dict[str, set[str]]:
@@ -141,3 +123,40 @@ class MedicationDispense(FHIRResource):
                 }
             }
         ]
+
+
+class MedicationDispenseBuilder(Builder[MedicationDispense]):
+    def __init__(self):
+        super().__init__(MedicationDispense)
+
+    def from_csop(self, item: DispensingItemRow, detail: DispensingItemDetailRow):
+        self._product._disp_id = detail.disp_id
+        self._product._disp_status = item.disp_status
+        self._product._local_drug_id = detail.local_drug_id
+        self._product._standard_drug_id = detail.standard_drug_id
+        self._product._product_cat = detail.product_cat
+        self._product._dfs = detail.dfs
+        self._product._quantity = detail.quantity
+        self._product._package_size = detail.package_size
+        self._product._instruction_text = detail.instruction_text
+        self._product._instruction_code = detail.instruction_code
+        self._product.whenHandedOver = item.disp_date
+
+        return self
+
+    def set_patient_ref(self, patient: Patient):
+        self._product._patientURL = patient.get_resource_url()
+        self._product._patient_hospital_number = patient._hospital_number
+        return self
+
+    def set_encounter_ref(self, encounter: EncounterDispensing):
+        self._product._encounterURL = encounter.get_resource_url()
+        return self
+
+    def add_performer_ref(self, performer: Practitioner | Organization):
+        self._product.performer.append({
+            "actor": {
+                "reference": performer.get_resource_url()
+            }
+        })
+        return self

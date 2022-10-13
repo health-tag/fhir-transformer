@@ -6,7 +6,7 @@ from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED
 from watchdog.observers.polling import PollingObserver
 
 from fhir_transformer.csop.processor import process
-from fhir_transformer.utilities.logging import Tee
+from fhir_transformer.utilities.logging import Tee, Guard
 
 
 def checkfiles_in_folder(folder_path: Path):
@@ -24,6 +24,10 @@ def checkfiles_in_folder(folder_path: Path):
     for file in files:
         lower_name = file.name.lower()
         if "done" in lower_name:
+            is_done = True
+        if "error" in lower_name:
+            is_done = True
+        if "working" in lower_name:
             is_done = True
         for key, value in iter(csop_checklist.items()):
             if key in lower_name:
@@ -83,35 +87,26 @@ class WorkingDirWatcher:
 def run_csop_folder(folder_path: Path):
     directory = folder_path.resolve()
     with Tee(f"{directory}/log.txt"):
-        print(f"Converting CSOP Files in {folder_path.absolute()}")
-        files = list(folder_path.glob("*"))
-        if len(files) == 0:
-            print(f"No file found!")
-        else:
-            print(f"{len(files)} file found")
+        with Guard(directory) as results:
+            print(f"Converting CSOP Files in {folder_path.absolute()}")
+            files = list(folder_path.glob("*"))
+            if len(files) == 0:
+                print(f"No file found!")
+            else:
+                print(f"{len(files)} file found")
+                for file in files:
+                    print(file)
+            bill_trans_xml_path: Path | None = None
+            bill_disp_xml_path: Path | None = None
             for file in files:
-                print(file)
-        bill_trans_xml_path: Path | None = None
-        bill_disp_xml_path: Path | None = None
-        for file in files:
-            if "billtran" in file.name.lower():
-                bill_trans_xml_path = file
-            if "billdisp" in file.name.lower():
-                bill_disp_xml_path = file
-        if bill_trans_xml_path is None or bill_disp_xml_path is None:
-            print("Requires both of BILLTRANS and BILLDISP files")
+                if "billtran" in file.name.lower():
+                    bill_trans_xml_path = file
+                if "billdisp" in file.name.lower():
+                    bill_disp_xml_path = file
+            if bill_trans_xml_path is None or bill_disp_xml_path is None:
+                print("Requires both of BILLTRANS and BILLDISP files")
+                return
+            print(f"Processing {bill_trans_xml_path.name} AND {bill_disp_xml_path.name}")
+            process(processed_results=results, bill_trans_xml_path=str(bill_trans_xml_path),
+                    bill_disp_xml_path=str(bill_disp_xml_path))
             return
-        print(f"PROCESSING {bill_trans_xml_path.name} AND {bill_disp_xml_path.name}")
-        result = process(bill_trans_xml_path=str(bill_trans_xml_path),
-                         bill_disp_xml_path=str(bill_disp_xml_path))
-
-        print("DONE")
-        with open(f"{directory}/result.json", "w") as out_file:
-            out_file.write(jsonpickle.encode(result, unpicklable=False, indent=True))
-        if all([r.statusCode < 400 for r in result]):
-            with open(f"{directory}/done", "w"):
-                pass
-        else:
-            with open(f"{directory}/error", "w"):
-                pass
-        return

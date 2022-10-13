@@ -1,84 +1,70 @@
+from abc import ABCMeta
+
 from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Entry import Entry
+from fhir_transformer.FHIR.Organization import Organization
+from fhir_transformer.FHIR.Patient import Patient
+from fhir_transformer.FHIR.Practitioner import Practitioner
+from fhir_transformer.FHIR.supports.support import Coding, Identifier, Builder
+from fhir_transformer.csop.holder.billdisp import DispensingItemRow
 from fhir_transformer.mapping_keys.csop import disp_status_mapping
 
+encounter_identifier_system = "https://sil-th.org/CSOP/dispenseId"
 
-class EncounterDispensing(FHIRResource):
-    def __init__(self, disp_id: str, presc_date: str, disp_date: str, disp_status: str,
-                 belonged_to_hospital_number: str, practitioner_system: str, practitioner_license_number_part: str,
-                 hospital_code: str, hospital_blockchain_address: str):
-        super(EncounterDispensing, self).__init__(resource_type="Encounter")
-        self._disp_id = disp_id
-        self._presc_date = presc_date
-        self._disp_date = disp_date
-        self._disp_status = disp_status
-        self._belonged_to_hospital_number = belonged_to_hospital_number
-        self._practitioner_system = practitioner_system
-        self._practitioner_license_number_part = practitioner_license_number_part
-        self._hospital_code = hospital_code
-        self._hospital_blockchain_address = hospital_blockchain_address
 
-        self.status = EncounterDispensing.status
-        self._reserved_class = EncounterDispensing._reserved_class
-        self.serviceType = EncounterDispensing.serviceType
+class Encounter(FHIRResource, metaclass=ABCMeta):
+    status = "finished",
+    _reserved_class = Coding("http://terminology.hl7.org/CodeSystem/v3-ActCode", "AMB",  "ambulatory")
+    def __init__(self):
+        super().__init__(resource_type="Encounter")
+        self._patient_hospital_number: str | None = None
+        self._patientURL: str | None = None
+        self.participant = list[dict[str, dict[str, str]]]()
+        self._practitionerURL: str | None = None
+        self._serviceProviderURL: str | None = None
+
+class EncounterDispensing(Encounter):
+    def __getstate__(self):
+        return super().__getstate__()
+
+    def __init__(self):
+        super().__init__()
+        self._disp_id: str | None = None
+        self._presc_date: str | None = None
+        self._disp_date: str | None = None
+        self._disp_status: str | None = None
+
 
     def create_entry(self) -> Entry:
-        entry = Entry(f"Encounter/{self._disp_id}", self, {
+        entry = Entry(self.get_resource_url(), self, {
             "method": "PUT",
-            "url": f"Encounter?identifier=https://sil-th.org/CSOP/dispenseId|{self._disp_id}",
-            "ifNoneExist": f"identifier=https://sil-th.org/CSOP/dispenseId|{self._disp_id}"
+            "url": self.get_resource_url(),
+            "ifNoneExist": f"identifier={self.identifier[0].get_string_for_reference()}"
         })
         return entry
 
-    def __getstate__(self):
-        return super().__getstate__()
+    def get_resource_url(self):
+        return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
 
     @property
     def text(self) -> dict[str, str]:
         return {
             "status": "extensions",
-            "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\">Dispense ID: {self._disp_id} (HN: {self._belonged_to_hospital_number})<p>service: Pharmacy | status: {disp_status_mapping[self._disp_status]}</p></div>"
+            "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\">Dispense ID: {self._disp_id} (HN: {self._patient_hospital_number})<p>service: Pharmacy | status: {disp_status_mapping[self._disp_status]}</p></div>"
         }
 
     @property
-    def identifier(self) -> list[dict[str, str]]:
-        return [
-            {
-                "system": "https://sil-th.org/CSOP/dispenseId",
-                "value": f"{self._disp_id}"
-            }
-        ]
+    def identifier(self):
+        return [Identifier(encounter_identifier_system, f"{self._disp_id}")]
 
-    status = "finished",
-    _reserved_class = {
-        "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-        "code": "AMB"
-    }
     serviceType = {
-        "coding": [
-            {
-                "system": "http://terminology.hl7.org/CodeSystem/service-type",
-                "code": "64",
-                "display": "Pharmacy"
-            }
-        ]
+        "coding": [Coding("http://terminology.hl7.org/CodeSystem/service-type", "64", "Pharmacy")]
     }
 
-    @property
     def subject(self) -> dict[str, str]:
         return {
-            "reference": f"Patient?identifier=https://sil-th.org/CSOP/hn|{self._belonged_to_hospital_number}"
+            "reference": self._patientURL
         }
-
-    @property
-    def participant(self) -> list[dict[str, dict[str, str]]]:
-        return [
-            {
-                "individual": {
-                    "reference": f"Practitioner?identifier={self._practitioner_system}|{self._practitioner_license_number_part}"
-                }
-            }
-        ]
 
     @property
     def period(self) -> dict[str, str]:
@@ -90,5 +76,34 @@ class EncounterDispensing(FHIRResource):
     @property
     def serviceProvider(self) -> dict[str, str]:
         return {
-            "reference": f"Organization/{self._hospital_blockchain_address}"
+            "reference": self._serviceProviderURL
         }
+
+
+class EncounterDispensingBuilder(Builder[EncounterDispensing]):
+    def __init__(self):
+        super().__init__(EncounterDispensing)
+
+    def from_csop(self, item : DispensingItemRow):
+        self._product._disp_id = item.disp_id
+        self._product._presc_date = item.presc_date
+        self._product._disp_date = item.disp_date
+        self._product._disp_status = item.disp_status
+        return self
+
+    def set_patient_ref(self, patient: Patient):
+        self._product._patientURL = patient.get_resource_url()
+        self._product._patient_hospital_number = patient._hospital_number
+        return self
+
+    def add_participant_ref(self, practitioner: Practitioner):
+        self._product.participant.append({
+            "individual": {
+                "reference": practitioner.get_resource_url()
+            }
+        })
+        return self
+
+    def set_serviceProvider_ref(self, organization: Organization):
+        self._product._serviceProviderURL = organization.get_resource_url()
+        return self

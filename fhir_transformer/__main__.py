@@ -7,8 +7,8 @@ from fhir_transformer.utilities.filesystem import WorkingDirWatcher, checkfiles_
 
 def banner():
     print("**********************************")
-    print("* HealthTAG FHIR Transformer 2.2 *")
-    print("*        6 Octorber 2022         *")
+    print("* HealthTAG FHIR Transformer 2.3 *")
+    print("*        15 Octorber 2022        *")
     print("*         healthtag.io           *")
     print("*      support@healthtag.io      *")
     print("**********************************")
@@ -36,7 +36,7 @@ def check_job_folder(folder_path: Path):
                 match result:
                     case "csop":
                         run_csop_folder(sub_path)
-        print("Finish checking and running work")
+        print("Finish running current works")
 
 
 if __name__ == '__main__':
