@@ -18,8 +18,7 @@ def checkfiles_in_folder(folder_path: Path):
     folders43_checklist["person"] = False
     folders43_checklist["provider"] = False
     folders43_checklist["drug_opd"] = False
-
-    files = Path(folder_path).glob("./*")
+    files = Path(folder_path).glob("*")
     is_done = False
     for file in files:
         lower_name = file.name.lower()
@@ -86,7 +85,7 @@ class WorkingDirWatcher:
 
 def run_csop_folder(folder_path: Path):
     directory = folder_path.resolve()
-    with Tee(f"{directory}/log.txt"):
+    with Tee(f"{directory}/log.txt", jobId=directory.name):
         with Guard(directory) as results:
             print(f"Converting CSOP Files in {folder_path.absolute()}")
             files = list(folder_path.glob("*"))

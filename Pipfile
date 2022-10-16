@@ -10,6 +10,7 @@ xmltodict = "*"
 jsonpickle = "*"
 watchdog = "*"
 python-dotenv = "*"
+httpx = "*"
 
 [dev-packages]
 

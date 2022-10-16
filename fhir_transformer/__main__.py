@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fhir_transformer.utilities.filesystem import WorkingDirWatcher, checkfiles_in_folder, run_csop_folder
 
+
 def banner():
     print("**********************************")
     print("* HealthTAG FHIR Transformer 2.3 *")
@@ -24,12 +25,13 @@ def watch_folder(folder_path: Path):
         watcher.stop()
         print(f'Stop watching {folder_path} folder')
 
+
 def check_job_folder(folder_path: Path):
     sub_paths = list(filter(lambda sp: sp.is_dir, list(folder_path.glob("**"))))
     if len(sub_paths) == 0:
         return
     else:
-        print("Checking on workingdir folder for any work")
+        print(f"Checking on {folder_path} folder for any work")
         for sub_path in sub_paths:
             if sub_path.is_dir():
                 result = checkfiles_in_folder(sub_path)
