@@ -1,5 +1,6 @@
 from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Entry import Entry
+from fhir_transformer.FHIR.supports.support import Identifier
 
 
 class Location(FHIRResource):
@@ -19,6 +20,9 @@ class Location(FHIRResource):
     def __getstate__(self):
         return super().__getstate__()
 
+    def get_resource_url(self) -> str:
+        return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
+
     @property
     def text(self) -> dict[str, str]:
         return {
@@ -28,12 +32,7 @@ class Location(FHIRResource):
 
     @property
     def identifier(self) -> list[dict[str, str]]:
-        return [
-            {
-                "system": "https://sil-th.org/CSOP/station",
-                "value": f"{self._station}"
-            }
-        ]
+        return [Identifier("https://sil-th.org/CSOP/station", f"{self._station}")]
 
     @property
     def type(self) -> list[dict[str, list[dict[str, str]]]]:

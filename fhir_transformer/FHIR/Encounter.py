@@ -84,6 +84,13 @@ class EncounterDispensingBuilder(Builder[EncounterDispensing]):
     def __init__(self):
         super().__init__(EncounterDispensing)
 
+    def from_raw(self, disp_id:str, presc_date:str, disp_date:str, disp_status:str):
+        self._product._disp_id = disp_id
+        self._product._presc_date = presc_date
+        self._product._disp_date = disp_date
+        self._product._disp_status = disp_status
+        return self
+
     def from_csop(self, item : DispensingItemRow):
         self._product._disp_id = item.disp_id
         self._product._presc_date = item.presc_date

@@ -161,6 +161,12 @@ class PatientBuilder(Builder[Patient]):
     def __init__(self):
         super().__init__(Patient)
 
+    def from_raw(self, pid:str, name:str, surname:str):
+        self._product._personal_id = pid
+        self._product._name = name
+        self._product._surname = surname
+        return self
+
     def from_csop(self, item: BillTransItem):
         self._product._personal_id = item.pid
         self._product._combine_name_surname = item.name

@@ -12,4 +12,4 @@ print(file_uploader_server_url)
 headers = {
     'apikey': ''
 }
-max_patient_per_cycle = 1000
+max_patient_per_cycle = 5000

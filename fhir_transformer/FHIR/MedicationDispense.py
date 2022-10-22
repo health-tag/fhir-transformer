@@ -128,6 +128,20 @@ class MedicationDispense(FHIRResource):
 class MedicationDispenseBuilder(Builder[MedicationDispense]):
     def __init__(self):
         super().__init__(MedicationDispense)
+    def from_raw(self, disp_id:str, disp_status:str, local_drug_id, standard_drug_id:str, product_cat:str,dfs:str,quantity:str, package_size:str,instruction_text:str,instruction_code:str,disp_date:str):
+        self._product._disp_id = disp_id
+        self._product._disp_status = disp_status
+        self._product._local_drug_id = local_drug_id
+        self._product._standard_drug_id = standard_drug_id
+        self._product._product_cat = product_cat
+        self._product._dfs = dfs
+        self._product._quantity = quantity
+        self._product._package_size = package_size
+        self._product._instruction_text = instruction_text
+        self._product._instruction_code = instruction_code
+        self._product.whenHandedOver = disp_date
+
+        return self
 
     def from_csop(self, item: DispensingItemRow, detail: DispensingItemDetailRow):
         self._product._disp_id = detail.disp_id
