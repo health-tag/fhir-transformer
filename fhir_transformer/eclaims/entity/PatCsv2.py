@@ -8,7 +8,7 @@ class PatCsvItem:
     surname: str
     gender_number: str
     martial_status_number: str
-    citizenId: str
+    citizen_id: str
     hospital_number: str
     nationality_code: str
     occupational_code: str

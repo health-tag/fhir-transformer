@@ -6,7 +6,7 @@ from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Encounter import encounter_identifier_system
 from fhir_transformer.FHIR.Patient import patient_HN_identifier_system, Patient
 from fhir_transformer.FHIR.supports.support import Coding
-from fhir_transformer.eclaims.entity.OpdCsv import OpdCsvItem
+from fhir_transformer.eclaims.entity.OpdCsv3 import OpdCsvItem
 
 
 class ObservationType(Enum):

@@ -1,10 +1,6 @@
-from datetime import datetime
-
-from fhir_transformer.FHIR.Bundle import BundleType, Bundle
-from fhir_transformer.FHIR.Patient import Patient, PatientBuilder
+from fhir_transformer.FHIR.Patient import PatientBuilder
 from fhir_transformer.eclaims.reader import open_pat_csv
 from fhir_transformer.models.result import BundleResult
-from fhir_transformer.utilities.networking import post_bundle_to_fhir_server
 from fhir_transformer.utilities.processing import send_singletype_bundle
 
 
