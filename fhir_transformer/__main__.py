@@ -9,7 +9,7 @@ from fhir_transformer.utilities.filesystem import WorkingDirWatcher, checkfiles_
 def banner():
     print("**********************************")
     print("* HealthTAG FHIR Transformer 2.3 *")
-    print("*        15 Octorber 2022        *")
+    print("*        15 October 2022        *")
     print("*         healthtag.io           *")
     print("*      support@healthtag.io      *")
     print("**********************************")
