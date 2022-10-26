@@ -41,7 +41,7 @@ class Practitioner(FHIRResource):
         entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
             "url": self.get_resource_id_url(),
-            "ifNoneExist": f"identifier={self.license_system.system}|{self.license_number_part}"
+            "ifNoneExist": self.id #f"identifier={self.license_system.system}|{self.license_number_part}"
         })
         return entry
 

@@ -43,7 +43,7 @@ class EncounterDispensing(Encounter):
         entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
             "url": self.get_resource_id_url(),
-            "ifNoneExist": f"identifier={self.identifier[0].get_string_for_reference()}"
+            "ifNoneExist": self.id # f"identifier={self.identifier[0].get_string_for_reference()}"
         })
         return entry
 

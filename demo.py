@@ -38,7 +38,7 @@ pt_builder = PatientBuilder()
 ed_builder = EncounterDispensingBuilder()
 md_builder = MedicationDispenseBuilder()
 
-prefix = "z"
+prefix = "x"
 
 for pid in range(1, 101):
     patient = pt_builder.from_raw(F"{prefix}{pid}", f"n{pid}", f"s{pid}").add_general_practitioner_organization_ref(
@@ -50,12 +50,12 @@ for pid in range(1, 101):
     for end in range(1, 101):
         pd = "2022-01-01"
         dd = "2022-01-03"
-        encounter = ed_builder.from_raw(f"disp-id-{id}{end}", pd, dd, "1").set_patient_ref(
+        encounter = ed_builder.from_raw(f"disp-id-{id}-{end}", pd, dd, "1").set_patient_ref(
             patient).set_serviceProvider_ref(
             organization).add_participant_ref(practitioner).product
         encounters[pid].append(encounter)
         for d in range(1, 11):
-            medicationDispense = md_builder.from_raw(f"disp-id-{id}{end}", "1", f"ldrug{d}", f"sddrug{d}", "MG", "1234",
+            medicationDispense = md_builder.from_raw(f"disp-id-{id}-{end}", "1", f"ldrug{d}", f"sddrug{d}", "MG", "1234",
                                                      "10",
                                                      "10", "Eat it", "347", dd).set_patient_ref(
                 patient).set_encounter_ref(encounter).add_performer_ref(practitioner).add_performer_ref(
