@@ -36,15 +36,21 @@ class MedicationDispense(FHIRResource):
         self._encounterURL: str | None = None
 
     def create_entry(self) -> Entry:
-        entry = Entry(f"MedicationDispense/{self._disp_id}|{self._local_drug_id}", self, {
+        entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
-            "url": f"MedicationDispense?identifier=https://sil-th.org/CSOP/dispenseId|{self._disp_id}&code=https://sil-th.org/CSOP/localCode|{self._local_drug_id}",
-            "ifNoneExist": f"identifier=https://sil-th.org/CSOP/dispenseId|{self._disp_id}&code=https://sil-th.org/CSOP/localCode|{self._local_drug_id}"
+            "url": self.get_resource_id_url(),
+            "ifNoneExist": self.get_resource_id_url()
         })
         return entry
 
+    @property
+    def id(self):
+        return f"DISPENSING-{self._disp_id}-LOCALDRUG-{self._local_drug_id}"
+
     def get_resource_url(self) -> str:
         return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
+    def get_resource_id_url(self):
+        return f"{self.resourceType}/{self.id}"
 
     @property
     def text(self) -> dict[str, str]:
@@ -161,18 +167,18 @@ class MedicationDispenseBuilder(Builder[MedicationDispense]):
         return self
 
     def set_patient_ref(self, patient: Patient):
-        self._product._patientURL = patient.get_resource_url()
+        self._product._patientURL = patient.get_resource_id_url()
         self._product._patient_hospital_number = patient._hospital_number
         return self
 
     def set_encounter_ref(self, encounter: EncounterDispensing):
-        self._product._encounterURL = encounter.get_resource_url()
+        self._product._encounterURL = encounter.get_resource_id_url()
         return self
 
     def add_performer_ref(self, performer: Practitioner | Organization):
         self._product.performer.append({
             "actor": {
-                "reference": performer.get_resource_url()
+                "reference": performer.get_resource_id_url()
             }
         })
         return self

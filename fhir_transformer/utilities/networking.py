@@ -1,7 +1,8 @@
 import warnings
 
-from fhir_transformer.models.result import BundleResult, EntryResult
 import jsonpickle
+
+from fhir_transformer.models.result import BundleResult, EntryResult
 import requests
 import traceback
 import re
@@ -17,12 +18,10 @@ actual_header = {
 
 
 def post_bundle_to_fhir_server(bundle: Bundle) -> BundleResult:
-    #print(jsonpickle.encode(bundle.entry[0], unpicklable=False))
     payload = jsonpickle.encode(bundle, unpicklable=False)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
-            #print(payload)
             res = requests.post(base_fhir_url, data=payload, headers=actual_header, verify=False)
             fhir_response = res.json()
             if fhir_response["resourceType"] == "OperationOutcome":

@@ -8,7 +8,6 @@ hospital_name_43folders = os.getenv('HOSPITAL_NAME_FOR_43FOLDERS')
 file_uploader_server_url = os.getenv('FILE_UPLOADER_SERVER_URL')
 base_fhir_url = os.getenv('FHIR_SERVER_URL')
 
-print(file_uploader_server_url)
 headers = {
     'apikey': ''
 }

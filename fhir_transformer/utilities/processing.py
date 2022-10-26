@@ -4,7 +4,6 @@ from typing import Iterable
 
 from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Bundle import Bundle, BundleType
-from fhir_transformer.FHIR.Entry import Entry
 from fhir_transformer.fhir_transformer_config import max_patient_per_cycle
 from fhir_transformer.models.result import BundleResult
 from fhir_transformer.utilities.networking import post_bundle_to_fhir_server

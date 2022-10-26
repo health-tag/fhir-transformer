@@ -66,15 +66,18 @@ class Patient(FHIRResource):
     def create_entry(self) -> Entry:
         # Note: urn:uuid: is only working in transaction only. It's better to use full URL instead
         # Old urn urn:uuid:Patient/{self._hospital_code}/{self._hospital_number}
-        entry = Entry(self.get_resource_url(), self, {
+        entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
-            "url": self.get_resource_url(),
+            "url": self.get_resource_id_url(),
             "ifNoneExist": f"identifier={self.identifier[0].get_string_for_reference()}"
         })
         return entry
 
     def get_resource_url(self) -> str:
         return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
+
+    def get_resource_id_url(self) -> str:
+        return f"{self.resourceType}/{self.id}"
 
     @property
     def name(self) -> list[dict[str, str | dict[str, str]]]:
@@ -109,6 +112,9 @@ class Patient(FHIRResource):
             identity_list.append(Identifier("https://sil-th.org/CSOP/memberNo", f"{self._member_number}"))
         return identity_list
 
+    @property
+    def id(self):
+        return self._personal_id
     @property
     def extension(self):
         if self._nationality_code is None or self._occupational_code is None:

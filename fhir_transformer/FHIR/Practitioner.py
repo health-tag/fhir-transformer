@@ -38,9 +38,9 @@ class Practitioner(FHIRResource):
         self._license_id = license_id
 
     def create_entry(self) -> Entry:
-        entry = Entry(self.get_resource_url(), self, {
+        entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
-            "url": self.get_resource_url(),
+            "url": self.get_resource_id_url(),
             "ifNoneExist": f"identifier={self.license_system.system}|{self.license_number_part}"
         })
         return entry
@@ -57,6 +57,9 @@ class Practitioner(FHIRResource):
             "status": "extensions",
             "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\">{self._license_id}</div>"
         }
+    @property
+    def id(self) -> str:
+        return f"{self.license_system.type}-{self.license_number_part}"
 
     @property
     def license_number_part(self) -> str:
@@ -68,7 +71,10 @@ class Practitioner(FHIRResource):
         return license_mapping[prefix]
 
     def get_resource_url(self):
-        return f"Practitioner?identifier={self.license_system.system}|{self.license_number_part}"
+        return f"{self.resourceType}?identifier={self.license_system.system}|{self.license_number_part}"
+
+    def get_resource_id_url(self):
+        return f"{self.resourceType}/{self.id}"
 
     @property
     def identifier(self) -> list[dict[str, str | dict[str, str]]]:

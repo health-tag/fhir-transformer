@@ -24,14 +24,17 @@ class Organization(FHIRResource):
         self._hospital_code = hospital_code
 
     def create_entry(self) -> Entry:
-        entry = Entry(self.get_resource_url(), self, {
+        entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
-            "url": self.get_resource_url(),
-            "ifNoneExist": self._hospital_blockchain_address
+            "url": self.get_resource_id_url(),
+            "ifNoneExist": self.id
         })
         return entry
 
     def get_resource_url(self):
+        return f"{self.resourceType}/{self._hospital_blockchain_address}"
+
+    def get_resource_id_url(self):
         return f"{self.resourceType}/{self._hospital_blockchain_address}"
 
     def __getstate__(self):

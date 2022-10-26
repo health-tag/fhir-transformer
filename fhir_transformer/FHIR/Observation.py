@@ -54,7 +54,7 @@ class ObservationBuilder:
         for identifier in patient.identifier:
             if identifier.system == patient_HN_identifier_system:
                 self._product.subject = {
-                    "reference": f"{patient.resourceType}?identifier={identifier.get_string_for_reference()}"
+                    "reference": f"{patient.resourceType}/{patient.id}"
                 }
         return self
 
