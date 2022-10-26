@@ -1,4 +1,5 @@
 from enum import Enum
+from inspect import getmembers
 from typing import Any
 
 from fhir_transformer.FHIR.Entry import Entry
@@ -20,11 +21,10 @@ class Bundle:
     def __init__(self, bundle_type: BundleType, entries: list[Entry]):
         self.type = bundle_type
         self.entry = entries
-        self.resourceType = Bundle.resourceType
 
     def __getstate__(self) -> dict[str, Any]:
-        json_dict = self.__dict__.copy()
-        return json_dict
+        return dict([t for t in getmembers(self) if not(t[0].startswith("_") or callable(t[1]) or t[1] is None or (
+                isinstance(t[1], list) and len(t[1]) == 0))])
 
     #def create_entry(self, bundle_id: int) -> Entry:
     #    entry = Entry(f"urn:uuid:Bundle/{bundle_id}", self, {

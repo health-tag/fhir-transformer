@@ -1,3 +1,5 @@
+from typing import Dict
+
 from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Encounter import Encounter, EncounterDispensing
 from fhir_transformer.FHIR.Entry import Entry
@@ -105,10 +107,10 @@ class MedicationDispense(FHIRResource):
         }
 
     @property
-    def quantity(self) -> dict[str, set[str]]:
+    def quantity(self) -> dict[str, str | None]:
         return {
-            "value": {self._quantity},
-            "unit": {self._package_size}
+            "value": int(self._quantity),
+            "unit": self._package_size
         }
 
     @property

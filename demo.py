@@ -1,6 +1,8 @@
 import math
 from datetime import datetime
 
+import jsonpickle
+
 from fhir_transformer.FHIR.Bundle import BundleType, Bundle
 from fhir_transformer.FHIR.Encounter import EncounterDispensing, EncounterDispensingBuilder
 from fhir_transformer.FHIR.Location import Location
@@ -9,7 +11,6 @@ from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.Patient import Patient, PatientBuilder
 from fhir_transformer.FHIR.Practitioner import Practitioner
 from fhir_transformer.models.result import BundleResult
-from fhir_transformer.utilities.networking import post_bundle_to_fhir_server
 from fhir_transformer.utilities.processing import send_singletype_bundle, bundle_cycler
 
 hospital_blockchain_address = "bx123456789"
@@ -24,7 +25,7 @@ start = datetime.now()
 organization = Organization(hospital_name, hospital_blockchain_address,
                             hospital_code)
 location = Location(station=station, hospital_blockchain_address=hospital_blockchain_address)
-practitioner = Location(station=station, hospital_blockchain_address=hospital_blockchain_address)
+practitioner = Practitioner(license_id=license_id)
 send_singletype_bundle([organization], results)
 send_singletype_bundle([location], results)
 send_singletype_bundle([practitioner], results)
@@ -38,21 +39,25 @@ ed_builder = EncounterDispensingBuilder()
 md_builder = MedicationDispenseBuilder()
 
 print(f"PREPARE PRACTITIONERS + PATIENT + ENCOUNTER + MEDICAL DISPENSING {datetime.now()}")
+prefix = "z"
 
-for pid in range(1, 1000):
-    patient = pt_builder.from_raw(F"{pid}", f"n{pid}", f"s{pid}").add_general_practitioner_organization_ref(
+for pid in range(1, 2):
+    patient = pt_builder.from_raw(F"{prefix}{pid}", f"n{pid}", f"s{pid}").add_general_practitioner_organization_ref(
         organization).set_managing_organization_ref(organization).product
     patients[pid] = patient
     encounters[pid] = list()
     medicationDispenses[pid] = list()
-    for end in range(1, 11):
+    id = f"{prefix}{pid}"
+    for end in range(1, 2):
         pd = "2022-01-01"
         dd = "2022-01-03"
-        encounter = ed_builder.from_raw(f"disp_id{end}", pd, dd, "1").set_patient_ref(patient).set_serviceProvider_ref(
+        encounter = ed_builder.from_raw(f"disp_id_{id}{end}", pd, dd, "1").set_patient_ref(
+            patient).set_serviceProvider_ref(
             organization).add_participant_ref(practitioner).product
         encounters[pid].append(encounter)
-        for d in range(1, 11):
-            medicationDispense = md_builder.from_raw(f"disp_id{end}", "1", f"drug{d}", f"ldrug{d}", "MG", "1234", "10",
+        for d in range(1, 100001):
+            medicationDispense = md_builder.from_raw(f"disp_id_{id}{end}", "1", f"ldrug{d}", f"sddrug{d}", "MG", "1234",
+                                                     "10",
                                                      "10", "Eat it", "347", dd).set_patient_ref(
                 patient).set_encounter_ref(encounter).add_performer_ref(practitioner).add_performer_ref(
                 organization).product
@@ -67,10 +72,12 @@ if mode == 1:
     bundle_cycler([entry for e in encounters.values() for entry in e], results)
     bundle_cycler([entry for e in medicationDispenses.values() for entry in e], results)
     end = datetime.now()
-    print(end - start)
+    print("Total time ", end - start)
     for r in results:
-        if r.statusCode >=400:
+        if r.statusCode >= 400:
             print("Error")
+    with open(f"demo_{prefix}.json", 'w', encoding="utf-8") as f:
+        f.write(jsonpickle.encode(results, unpicklable=False, indent=True))
 if mode == 2:
     print(
         f"SENDING PATIENT + ENCOUNTER + MEDICAL DISPENSING IN {math.ceil(patients_count / max_patient_per_cycle)} CYCLES {datetime.now()}")

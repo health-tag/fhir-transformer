@@ -1,3 +1,5 @@
+import warnings
+
 from fhir_transformer.models.result import BundleResult, EntryResult
 import jsonpickle
 import requests
@@ -17,24 +19,30 @@ actual_header = {
 def post_bundle_to_fhir_server(bundle: Bundle) -> BundleResult:
     #print(jsonpickle.encode(bundle.entry[0], unpicklable=False))
     payload = jsonpickle.encode(bundle, unpicklable=False)
-    try:
-        res = requests.post(base_fhir_url, data=payload, headers=actual_header)
-        fhir_response = res.json()
-        if fhir_response["resourceType"] == "OperationOutcome":
-            print(fhir_response)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            #print(payload)
+            res = requests.post(base_fhir_url, data=payload, headers=actual_header, verify=False)
+            fhir_response = res.json()
+            if fhir_response["resourceType"] == "OperationOutcome":
+                print("SEND")
+                print(payload)
+                print("RESPONSE")
+                print(fhir_response)
+                return BundleResult(1000,
+                                    [EntryResult(entry.resource.resourceType, entry.fullUrl, "Failure to send") for entry in
+                                     bundle.entry])
+            results = [EntryResult(entry.resource.resourceType, entry.fullUrl) for entry in bundle.entry]
+            for i, entry in enumerate(fhir_response["entry"]):
+                results[i].status = entry["response"]["status"]
+                results[i].location = entry["response"]["location"] if "location" in entry["response"] else None
+                if int(re.sub("[^0-9]", "", results[i].status)) >= 400:
+                    results[i].error_fhir_response = entry
+
+            return BundleResult(res.status_code, results)
+        except Exception:
+            traceback.print_exc()
             return BundleResult(1000,
                                 [EntryResult(entry.resource.resourceType, entry.fullUrl, "Failure to send") for entry in
                                  bundle.entry])
-        results = [EntryResult(entry.resource.resourceType, entry.fullUrl) for entry in bundle.entry]
-        for i, entry in enumerate(fhir_response["entry"]):
-            results[i].status = entry["response"]["status"]
-            results[i].location = entry["response"]["location"] if "location" in entry["response"] else None
-            if int(re.sub("[^0-9]", "", results[i].status)) >= 400:
-                results[i].error_fhir_response = entry["response"]
-
-        return BundleResult(res.status_code, results)
-    except Exception:
-        traceback.print_exc()
-        return BundleResult(1000,
-                            [EntryResult(entry.resource.resourceType, entry.fullUrl, "Failure to send") for entry in
-                             bundle.entry])

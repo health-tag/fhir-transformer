@@ -94,7 +94,7 @@ class Patient(FHIRResource):
                     self._name
                 ]
             }
-        return name_json
+        return [name_json]
 
     @property
     def identifier(self):

@@ -13,8 +13,9 @@ encounter_identifier_system = "https://sil-th.org/CSOP/dispenseId"
 
 
 class Encounter(FHIRResource, metaclass=ABCMeta):
-    status = "finished",
+    status = "finished"
     _reserved_class = Coding("http://terminology.hl7.org/CodeSystem/v3-ActCode", "AMB",  "ambulatory")
+
     def __init__(self):
         super().__init__(resource_type="Encounter")
         self._patient_hospital_number: str | None = None
@@ -22,6 +23,8 @@ class Encounter(FHIRResource, metaclass=ABCMeta):
         self.participant = list[dict[str, dict[str, str]]]()
         self._practitionerURL: str | None = None
         self._serviceProviderURL: str | None = None
+    def __getstate__(self):
+        return super().__getstate__()
 
 class EncounterDispensing(Encounter):
     def __getstate__(self):
