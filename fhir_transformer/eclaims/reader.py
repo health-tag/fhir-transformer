@@ -1,51 +1,20 @@
 import pandas as pd
 
-from fhir_transformer.eclaims.entity.DruCsv16 import DruCsvItem
-from fhir_transformer.eclaims.entity.InsCsv1 import InsCsvItem
-from fhir_transformer.eclaims.entity.OdxCsv5 import OdxCsvItem
-from fhir_transformer.eclaims.entity.OpdCsv3 import OpdCsvItem
-from fhir_transformer.eclaims.entity.PatCsv2 import PatCsvItem
+from fhir_transformer.eclaims.files.DruCsv16 import DruCsvItem
+from fhir_transformer.eclaims.files.InsCsv1 import InsCsvItem
+from fhir_transformer.eclaims.files.OdxCsv5 import OdxCsvItem
+from fhir_transformer.eclaims.files.OpdCsv3 import OpdCsvItem
+from fhir_transformer.eclaims.files.PatCsv2 import PatCsvItem
 
 
-def open_pat_csv(file_path: str) -> list[PatCsvItem]:
-    # hcode|hn|changwat|amphur|dob|sex|marriage|occupa|nation|person_id|namepat|title|fname|lname|idtype
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
-    df.columns = df.columns.str.lower()
-    items = list[PatCsvItem]()
-    for i, row in df.iterrows():
-        items.append(PatCsvItem(hospital_code=row["hcode"],
-                                title=row["title"],
-                                name=row["fname"],
-                                surname=row["lname"],
-                                gender_number=row["sex"],
-                                martial_status_number=row["marriage"],
-                                citizen_id=row["person_id"],
-                                hospital_number=row["hn"],
-                                nationality_code=row["nation"],
-                                occupational_code=row["occupa"]))
-    return items
+
 
 
 def open_opd_csv(file_path: str) -> list[OpdCsvItem]:
     pass
 
 
-def open_opx_csv(file_path: str) -> list[OdxCsvItem]:
-    # hn|datedx|clinic|diag|dxtype|drdx|person_id|seq
 
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
-    df.columns = df.columns.str.upper()
-    items = list[OdxCsvItem]()
-    for i, row in df.iterrows():
-        items.append(OdxCsvItem(sequence=row["SEQ"],
-                                hospital_number=row["HN"],
-                                visit_date=row["DATEDX"],
-                                clinic_number=row["CLINIC"],
-                                diagnosis_icd10=row["DIAG"],
-                                diagnosis_type_number=row["DXTYPE"],
-                                diagnosis_doctor=row["DRDX"],
-                                citizen_id=row["PERSON_ID"]))
-    return items
 
 
 def open_ins_csv(file_path: str) -> list[InsCsvItem]:

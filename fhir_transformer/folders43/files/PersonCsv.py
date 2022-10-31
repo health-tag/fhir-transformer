@@ -16,6 +16,6 @@ class PersonCsvItem:
 
 
 @dataclass
-class PersonCSV:
+class PersonCsv:
     hospital_code: str
     items_dict: dict[str, PersonCsvItem]

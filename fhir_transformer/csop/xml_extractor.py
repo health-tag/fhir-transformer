@@ -1,7 +1,7 @@
 from charset_normalizer import from_path
 import xmltodict
-from fhir_transformer.csop.holder.billtrans import BillTransItem, BillTransXML
-from fhir_transformer.csop.holder.billdisp import DispensingItemDetailRow, DispensingItemRow
+from fhir_transformer.csop.files.billtrans import BillTransItem, BillTransXML
+from fhir_transformer.csop.files.billdisp import DispensingItemDetailRow, DispensingItemRow
 
 
 def _get_file_encoding(file_path):

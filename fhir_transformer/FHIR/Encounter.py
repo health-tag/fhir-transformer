@@ -6,7 +6,7 @@ from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.Patient import Patient
 from fhir_transformer.FHIR.Practitioner import Practitioner
 from fhir_transformer.FHIR.supports.support import Coding, Identifier, Builder
-from fhir_transformer.csop.holder.billdisp import DispensingItemRow
+from fhir_transformer.csop.files.billdisp import DispensingItemRow
 from fhir_transformer.mapping_keys.csop import disp_status_mapping
 
 encounter_identifier_system = "https://sil-th.org/CSOP/dispenseId"

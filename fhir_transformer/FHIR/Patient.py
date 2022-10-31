@@ -4,8 +4,8 @@ from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Entry import Entry
 from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.supports.support import Identifier, Coding, Builder
-from fhir_transformer.csop.holder.billtrans import BillTransItem
-from fhir_transformer.eclaims.entity.PatCsv2 import PatCsvItem
+from fhir_transformer.csop.files.billtrans import BillTransItem
+from fhir_transformer.eclaims.files.PatCsv2 import PatCsvItem
 from fhir_transformer.folders43.files.person_csv import PersonCsvItem
 
 

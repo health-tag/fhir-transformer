@@ -7,7 +7,7 @@ from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.Patient import Patient
 from fhir_transformer.FHIR.Practitioner import Practitioner
 from fhir_transformer.FHIR.supports.support import Builder, Identifier, Coding
-from fhir_transformer.csop.holder.billdisp import DispensingItemDetailRow, DispensingItemRow
+from fhir_transformer.csop.files.billdisp import DispensingItemDetailRow, DispensingItemRow
 from fhir_transformer.mapping_keys.csop import disp_status_mapping
 
 
