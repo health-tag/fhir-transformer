@@ -1,7 +1,5 @@
-from contextlib import redirect_stdout, redirect_stderr, closing
 from pathlib import Path
 
-import jsonpickle
 from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED
 from watchdog.observers.polling import PollingObserver
 

@@ -1,8 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Dict, Generic, List, TypeVar, Callable
-
-from fhir_transformer.FHIR.Base import FHIRResource
+from typing import Generic, TypeVar, Callable
 
 T = TypeVar("T")
 

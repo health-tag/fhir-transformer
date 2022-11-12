@@ -31,7 +31,7 @@ class Location(FHIRResource):
         }
 
     @property
-    def identifier(self) -> list[dict[str, str]]:
+    def identifier(self) -> list[Identifier]:
         return [Identifier("https://sil-th.org/CSOP/station", f"{self._station}")]
 
     @property

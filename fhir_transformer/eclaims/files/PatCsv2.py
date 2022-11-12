@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from os import PathLike
 
 import pandas as pd
 
@@ -15,10 +16,9 @@ class PatCsvItem:
     hospital_number: str
     nationality_code: str
     occupational_code: str
-
-
-def open_pat_csv(file_path: str) -> list[PatCsvItem]:
-    # hcode|hn|changwat|amphur|dob|sex|marriage|occupa|nation|person_id|namepat|title|fname|lname|idtype
+#hcode|hn|changwat|amphur|dob|sex|marriage|occupa|nation|person_id|namepat|title|fname|lname|idtype
+# 11218|651218347|60|11|19580101|1|2|505|099|1842228343492|ตัวอย่างชื่อ-6138 ตัวอย่างนามสกุล-4970,นาย|นาย|ตัวอย่างชื่อ-6138|ตัวอย่างนามสกุล-4970|1
+def open_pat_csv(file_path: PathLike) -> list[PatCsvItem]:
     df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
     df.columns = df.columns.str.lower()
     items = list[PatCsvItem]()

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from fhir_transformer.folders43.holders import ProviderItem, DrugItem
-from fhir_transformer.folders43.files.person_csv import PersonCsvItem, PersonCSV
+from fhir_transformer.folders43.files.PersonCsv import PersonCsvItem
 
 
 def _open_person_csv(file_path: str) -> dict[str, PersonCsvItem]:

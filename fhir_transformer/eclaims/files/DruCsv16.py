@@ -1,36 +1,39 @@
 from dataclasses import dataclass
+from os import PathLike
+
+import pandas as pd
 
 
 @dataclass
 class DruCsvItem:
     hospital_code: str
-    """HCODE"""
+    """hcode"""
     hospital_number: str
-    """HN"""
+    """hn"""
     admission_number: str
-    """AN"""
+    """an"""
     clinic_number: str
-    """CLINIC"""
+    """clinic"""
     person_id: str
-    """PERSON_ID"""
+    """person_id"""
     service_date: str
-    """DATE_SERVE"""
+    """date_serv"""
     drug_id: str
-    """DID"""
+    """did"""
     drug_name: str
-    """DIDNAME"""
+    """didname"""
     amount: str
-    """AMOUNT"""
+    """amount"""
     drug_id24: str
-    """DIDSTD"""
+    """didstd"""
     unit: str
-    """UNIT"""
+    """unit"""
     unit_pack: str
-    """UNIT_PACK"""
+    """unit_pack"""
     sequence: str
-    """SEQ"""
+    """seq"""
     use_status: str
-    """USE_STATUS
+    """use_status
     1 = ใช้ในโรงพยาบาล
     2 = ใช้ที่บ้าน
     """
@@ -48,4 +51,27 @@ class DruCsvItem:
     11 DENTAL (ทันตกรรม)
     12 OTHER (อื่นๆ
     """
-    # hcode|hn|an|clinic|person_id|date_serv|did|didname|amount|drugpric|drugcost|didstd|unit|unit_pack|seq|drugremark|pa_no|totcopay|use_status|total
+#hcode|hn|an|clinic|person_id|date_serv|did|didname|amount|drugpric|drugcost|didstd|unit|unit_pack|seq|drugremark|pa_no|totcopay|use_status|total
+#11218|651218347||0011|1842228343492|20220912|D0000910|Guaifenesin 200 mg tab|20.00|1.0|0.24|101124000014203120381144|เม็ด||065156262|||0.00|2|20.00
+
+def open_dru_csv(file_path: PathLike) -> list[DruCsvItem]:
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+    df.columns = df.columns.str.upper()
+    items = list[DruCsvItem]()
+    for i, row in df.iterrows():
+        items.append(DruCsvItem(hospital_code=row["hcode"],
+                                hospital_number=row["hn"],
+                                admission_number=row["an"],
+                                clinic_number=row["clinic"],
+                                person_id=row["person_id"],
+                                service_date=row["date_serv"],
+                                drug_id=row["did"],
+                                drug_name=row["didname"],
+                                amount=row["amount"],
+                                drug_id24=row["didstd"],
+                                unit=row["unit"],
+                                unit_pack=row["unit_pack"],
+                                sequence=row["seq"],
+                                use_status=row["use_status"],
+                                ))
+    return items

@@ -4,7 +4,8 @@ from fhir_transformer.FHIR.MedicationDispense import MedicationDispense, Medicat
 from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.Patient import Patient, PatientBuilder
 from fhir_transformer.FHIR.Practitioner import Practitioner
-from fhir_transformer.csop.xml_extractor import open_bill_trans_xml, open_bill_disp_xml
+from fhir_transformer.csop.files.billdisp import open_bill_disp_xml
+from fhir_transformer.csop.files.billtrans import open_bill_trans_xml
 from fhir_transformer.fhir_transformer_config import hospital_blockchain_address
 from fhir_transformer.models.result import BundleResult
 from fhir_transformer.utilities.processing import send_singletype_bundle, bundle_cycler

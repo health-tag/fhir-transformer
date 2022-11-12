@@ -6,7 +6,7 @@ from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.supports.support import Identifier, Coding, Builder
 from fhir_transformer.csop.files.billtrans import BillTransItem
 from fhir_transformer.eclaims.files.PatCsv2 import PatCsvItem
-from fhir_transformer.folders43.files.person_csv import PersonCsvItem
+from fhir_transformer.folders43.files.PersonCsv import PersonCsvItem
 
 
 class Gender(Enum):
@@ -163,7 +163,7 @@ class Patient(FHIRResource):
         }
 
 
-class PatientBuilder(Builder[Patient]):
+class PatientBuilder(Builder[ Patient]):
     def __init__(self):
         super().__init__(Patient)
 
@@ -191,7 +191,7 @@ class PatientBuilder(Builder[Patient]):
         return self
 
     def from_eclaims(self, item: PatCsvItem):
-        self._product._personal_id = item.citizenId
+        self._product._personal_id = item.citizen_id
         self._product._name = item.name
         self._product._surname = item.surname
         self._product.gender = Gender(int(item.gender_number))

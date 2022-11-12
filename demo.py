@@ -11,6 +11,7 @@ from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.Patient import Patient, PatientBuilder
 from fhir_transformer.FHIR.Practitioner import Practitioner
 from fhir_transformer.models.result import BundleResult
+from fhir_transformer.utilities.networking import post_bundle_to_fhir_server
 from fhir_transformer.utilities.processing import send_singletype_bundle, bundle_cycler
 
 hospital_blockchain_address = "bx123456789"
@@ -90,7 +91,7 @@ if mode == 2:
         if ((i > 0) and (i % max_patient_per_cycle == 0)) or (i + 1 == patients_count):
             print(f"SENDING PATIENT + ENCOUNTER + MEDICAL DISPENSING CYCLE {cycle + 1} {datetime.now()}")
             print(f"{len(cycle_entries)} entries")
-            send_bundle(Bundle(BundleType.Transaction, cycle_entries))
+            post_bundle_to_fhir_server(Bundle(BundleType.Transaction, cycle_entries))
             cycle = cycle + 1
             cycle_entries.clear()
 print(f"DONE {datetime.now()}")

@@ -10,7 +10,7 @@ from fhir_transformer.utilities.networking import post_bundle_to_fhir_server
 
 
 def process(person_csv_path: str, drug_opd_csv_path: str, provider_csv_path: str) -> list[BundleResult]:
-    results = results = list[BundleResult]()
+    results = list[BundleResult]()
     personCSV = _open_person_csv(person_csv_path)
     drugDict = _open_drug_opd_csv(drug_opd_csv_path)  # pid,DrugItem
     providerDict = _open_provider_csv(provider_csv_path)  # providerId,ProviderItem

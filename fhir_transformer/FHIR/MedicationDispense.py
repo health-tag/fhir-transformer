@@ -1,13 +1,12 @@
-from typing import Dict
-
 from fhir_transformer.FHIR.Base import FHIRResource
-from fhir_transformer.FHIR.Encounter import Encounter, EncounterDispensing
+from fhir_transformer.FHIR.Encounter import  EncounterDispensing
 from fhir_transformer.FHIR.Entry import Entry
 from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.Patient import Patient
 from fhir_transformer.FHIR.Practitioner import Practitioner
 from fhir_transformer.FHIR.supports.support import Builder, Identifier, Coding
 from fhir_transformer.csop.files.billdisp import DispensingItemDetailRow, DispensingItemRow
+from fhir_transformer.eclaims.files.DruCsv16 import DruCsvItem
 from fhir_transformer.mapping_keys.csop import disp_status_mapping
 
 
@@ -162,6 +161,21 @@ class MedicationDispenseBuilder(Builder[MedicationDispense]):
         self._product._package_size = detail.package_size
         self._product._instruction_text = detail.instruction_text
         self._product._instruction_code = detail.instruction_code
+        self._product.whenHandedOver = item.disp_date
+
+        return self
+
+    def from_eclaim(self, item: DruCsvItem):
+        self._product._disp_id = f"{item.hospital_number}_{item.service_date}_{item.drug_id24}"
+        self._product._disp_status = "active"
+        self._product._local_drug_id = item.local_drug_id
+        self._product._standard_drug_id = item.standard_drug_id
+        self._product._product_cat = item.product_cat
+        self._product._dfs = item.dfs
+        self._product._quantity = item.quantity
+        self._product._package_size = item.package_size
+        self._product._instruction_text = item.instruction_text
+        self._product._instruction_code = item.instruction_code
         self._product.whenHandedOver = item.disp_date
 
         return self
