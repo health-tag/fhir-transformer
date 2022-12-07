@@ -30,10 +30,11 @@ def process(processed_results: list[BundleResult], bill_trans_xml_path: str, bil
     practitioners = dict[str, Practitioner]()
     patients = dict[str, Patient]()
     encounters: dict[str, list[EncounterDispensing]] = dict()
-    medicationDispenses: dict[str, list[MedicationDispense]] = dict()
+    medication_dispenses: dict[str, list[MedicationDispense]] = dict()
     encounter_builder = EncounterDispensingBuilder()
     medication_dispense_builder = MedicationDispenseBuilder()
-    for disp_id, bill_disp_item in bill_disp_xml.items():
+
+    for disp_id, bill_disp_item in bill_disp_xml.items(): # ตรวจสอบจากข้อมูลรายการยา ย้อนกลับไปหาคน
         matched_bill_trans_item = bill_trans_xml.bill_trans_items_dict[bill_disp_item.inv_no]
 
         if bill_disp_item.license_id not in practitioners.keys():
@@ -50,8 +51,10 @@ def process(processed_results: list[BundleResult], bill_trans_xml_path: str, bil
         else:
             patient = patients[matched_bill_trans_item.pid]
 
-        encounters[matched_bill_trans_item.pid] = list()
-        medicationDispenses[matched_bill_trans_item.pid] = list()
+        if matched_bill_trans_item.pid not in encounters.keys():
+            encounters[matched_bill_trans_item.pid] = list()
+        if matched_bill_trans_item.pid not in medication_dispenses.keys():
+            medication_dispenses[matched_bill_trans_item.pid] = list()
 
         encounter = encounter_builder.from_csop(bill_disp_item) \
             .set_patient_ref(patient) \
@@ -67,29 +70,10 @@ def process(processed_results: list[BundleResult], bill_trans_xml_path: str, bil
                 .add_performer_ref(practitioner) \
                 .add_performer_ref(organization) \
                 .product
-            medicationDispenses[matched_bill_trans_item.pid].append(medication_dispense)
+            medication_dispenses[matched_bill_trans_item.pid].append(medication_dispense)
     send_singletype_bundle(practitioners.values(), processed_results)
-    # PREPARE PATIENT + ENCOUNTER + MEDICATION DISPENSE
+
     bundle_cycler(patients.values(), processed_results)
     bundle_cycler([entry for e in encounters.values() for entry in e], processed_results)
-    bundle_cycler([entry for e in medicationDispenses.values() for entry in e], processed_results)
-    return
-    '''
-    cycle = 0
-    cycle_entries = list[Entry]()
-    patients_count = len(patients.keys())
-    print(
-        f"SENDING PATIENT + ENCOUNTER + MEDICAL DISPENSING IN {math.ceil(patients_count / max_patient_per_cycle)} CYCLES {datetime.now()}")
-    for i, key in enumerate(patients.keys()):
-        cycle_entries = cycle_entries + [patients[key].create_entry()]
-        if key in encounters:
-            cycle_entries = cycle_entries + [encounter.create_entry() for encounter in encounters[key]]
-        if key in medicationDispenses:
-            cycle_entries = cycle_entries + [medication_dispense.create_entry() for medication_dispense in
-                                             medicationDispenses[key]]
-        if ((i > 0) and (i % max_patient_per_cycle == 0)) or (i + 1 == patients_count):
-            print(f"SENDING PATIENT + ENCOUNTER + MEDICAL DISPENSING CYCLE {cycle + 1} {datetime.now()}")
-            send_bundle(Bundle(BundleType.Transaction, cycle_entries))
-            cycle = cycle + 1
-            cycle_entries.clear()
-    '''
+    bundle_cycler([entry for e in medication_dispenses.values() for entry in e], processed_results)
+    return processed_results

@@ -44,7 +44,7 @@ class MedicationDispense(FHIRResource):
 
     @property
     def id(self):
-        return f"DISPENSING-{self._disp_id}-LOCALDRUG-{self._local_drug_id}"
+        return f"DISPENSING-{self._disp_id}-LOCAL-DRUG-{self.create_id(self._local_drug_id)}"
 
     def get_resource_url(self) -> str:
         return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
@@ -161,7 +161,7 @@ class MedicationDispenseBuilder(Builder[MedicationDispense]):
         self._product._package_size = detail.package_size
         self._product._instruction_text = detail.instruction_text
         self._product._instruction_code = detail.instruction_code
-        self._product.whenHandedOver = item.disp_date
+        self._product.whenHandedOver = f"{item.disp_date}+07:00"
 
         return self
 

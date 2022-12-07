@@ -114,7 +114,7 @@ class Patient(FHIRResource):
 
     @property
     def id(self):
-        return self._personal_id
+        return f"TH-CID-{self._personal_id}"
     @property
     def extension(self):
         if self._nationality_code is None or self._occupational_code is None:
@@ -175,6 +175,7 @@ class PatientBuilder(Builder[ Patient]):
 
     def from_csop(self, item: BillTransItem):
         self._product._personal_id = item.pid
+        self._product._hospital_number = item.hn
         self._product._combine_name_surname = item.name
         self._product._member_number = item.member_number
         return self

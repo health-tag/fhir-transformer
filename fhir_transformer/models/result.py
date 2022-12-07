@@ -8,9 +8,10 @@ class EntryResult:
     description: str
     status: Optional[str] = None
     location: Optional[str] = None
-    error_fhir_response = None
+    fhirErrorResponse = None
 
 @dataclass
 class BundleResult:
     statusCode:int
+    fhirErrorResponse = None
     entries: list[EntryResult]

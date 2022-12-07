@@ -1,6 +1,11 @@
-from pathlib import Path
+import os
+import uuid
+import zipfile
+from datetime import datetime
+from pathlib import Path, PurePath
 
-from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED
+import jsonpickle
+from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED, EVENT_TYPE_CREATED
 from watchdog.observers.polling import PollingObserver
 
 from fhir_transformer.csop.processor import process
@@ -8,9 +13,10 @@ from fhir_transformer.utilities.logging import Tee, Guard
 
 
 def checkfiles_in_folder(folder_path: Path):
+    print(f"-> {folder_path}")
     csop_checklist = dict[str, bool]()
     csop_checklist["billdisp"] = False
-    csop_checklist["billtrans"] = False
+    csop_checklist["billtran"] = False
 
     folders43_checklist = dict[str, bool]()
     folders43_checklist["person"] = False
@@ -36,11 +42,23 @@ def checkfiles_in_folder(folder_path: Path):
     is_csop = all(csop_checklist.values()) and not is_done
     is_folders43 = all(folders43_checklist.values()) and not is_done
     if is_csop:
+        print(f"{folder_path} will be processed as CSOP.")
         return "csop"
     elif is_folders43:
+        print(f"{folder_path} will be processed as 43 Folders.")
         return "folders43"
     else:
         return None
+
+def findWorkingFolder(path:PurePath,iteration=0):
+    if(iteration > 10):
+        return False
+    else:
+        parent = path.parent
+        if(parent.name.lower()=="workingdir"):
+            return parent
+        else:
+            return findWorkingFolder(parent, iteration+1)
 
 
 class Handler(FileSystemEventHandler):
@@ -53,6 +71,23 @@ class Handler(FileSystemEventHandler):
             return
         if event.event_type == EVENT_TYPE_DELETED and not (
                 source_path.name.lower() == "done" or source_path.name.lower() == "error"):
+            return
+        if ("csop_zips" in str(source_path).lower()) and (event.event_type == EVENT_TYPE_CREATED) and (".zip" in source_path.suffix.lower()):
+            with zipfile.ZipFile(source_path, 'r') as zip_ref:
+                id = str(uuid.uuid4())
+                workingdir = findWorkingFolder(source_path)
+                if workingdir is not False:
+                    zip_folder = workingdir / "uploads" / id
+                    zip_ref.extractall(zip_folder)
+                    files = zip_folder.glob("*")
+                    meta = {"id": id, "description": f"Automatically created from {source_path.name}",
+                            "files": [f.name for f in files],
+                            "type": "csop", "dataDate": datetime.now(), "taskDate": datetime.now()}
+                    with open(zip_folder / "info.json", "w") as info_file:
+                        info_file.write(jsonpickle.encode(meta, unpicklable=False, indent=True))
+                    with open(zip_folder / "csop", "w") as task_file:
+                        task_file.write("")
+            os.remove(source_path)
             return
         job_folder_path = source_path.parent
         if job_folder_path.name not in Handler.pendingJob or ~Handler.pendingJob[job_folder_path.name]:

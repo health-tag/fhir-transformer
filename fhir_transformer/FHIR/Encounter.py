@@ -49,7 +49,7 @@ class EncounterDispensing(Encounter):
 
     @property
     def id(self):
-        return f"DISPENSING-{self._disp_id}"
+        return f"DISPENSING-{self.create_id(self._disp_id)}"
 
     def get_resource_url(self):
         return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"

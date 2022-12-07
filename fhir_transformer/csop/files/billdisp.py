@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import xmltodict
 from charset_normalizer import from_path
@@ -20,7 +20,7 @@ class DispensingItemDetailRow:
     # 'supply_for': item_split[18],
 
 
-@dataclass()
+@dataclass
 class DispensingItemRow:
     """
     dictionary of DispensingId:str,DispensingItem (DispensingItem.items:DispensingItemDetail is already related with DispensingItem)
@@ -32,7 +32,7 @@ class DispensingItemRow:
     inv_no: str
     disp_id: str
     provider_id: str
-    details = list[DispensingItemDetailRow]()
+    details: list[DispensingItemDetailRow] = field(default_factory=list[DispensingItemDetailRow])
 
 
 def open_bill_disp_xml(file_path):
@@ -58,6 +58,7 @@ def open_bill_disp_xml(file_path):
                 # practitioner=license_mapping[columns[7][0]],
             )
             Dispensing_items[dispensing_item.disp_id] = dispensing_item
+
         for item in DispensedItems_rows:
             columns = item.split('|')
             dispensing_item_detail = DispensingItemDetailRow(
@@ -74,6 +75,5 @@ def open_bill_disp_xml(file_path):
                 # 'multiple_disp': columns[17],
                 # 'supply_for': columns[18],
             )
-            matched_dispensing_item = Dispensing_items[dispensing_item_detail.disp_id].details
-            matched_dispensing_item.append(dispensing_item_detail)
+            Dispensing_items[dispensing_item_detail.disp_id].details.append(dispensing_item_detail)
         return Dispensing_items

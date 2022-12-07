@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod, ABCMeta
 from typing import Any
 from inspect import getmembers
@@ -9,6 +10,9 @@ class FHIRResource(metaclass=ABCMeta):
     @abstractmethod
     def create_entry(self):
         pass
+
+    def create_id(self, text: str):
+        return re.sub('[^a-zA-Z0-9\-]', '-', text)
 
     @abstractmethod
     def __getstate__(self) -> dict[str, Any]:

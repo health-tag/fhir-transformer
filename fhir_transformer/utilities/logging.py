@@ -4,6 +4,7 @@ import os
 import warnings
 import httpx
 import jsonpickle
+import re
 
 from fhir_transformer.fhir_transformer_config import file_uploader_server_url
 from fhir_transformer.models.result import BundleResult
@@ -13,25 +14,33 @@ from fhir_transformer.models.result import BundleResult
 class Tee(object):
 
     def __init__(self, filename, jobId: str = None):
-
+        self.stdout = sys.stdout
         if file_uploader_server_url is not None:
-            self.client = httpx.AsyncClient()
+            self.client = httpx.Client()
+            try:
+                self.client.get(f"{file_uploader_server_url}/python")
+            except:
+                print(f"Unable to connect to {file_uploader_server_url}/python")
+                pass
         self.file = open(filename, 'w', encoding="utf-8")
         self.jobId = jobId
-        self.stdout = sys.stdout
 
     def __enter__(self):
+        self.log_containing_error = False
         sys.stdout = self
 
     def __exit__(self, exc_type, exc_value, tb):
-        if file_uploader_server_url is not None:
-            self.client.aclose()
-        sys.stdout = self.stdout
         if exc_type is not None:
             self.file.write(traceback.format_exc())
             self.send_ending("error")
         else:
-            self.send_ending("finish")
+            if self.log_containing_error:
+                self.send_ending("error")
+            else:
+                self.send_ending("finish")
+        if file_uploader_server_url is not None:
+            self.client.close()
+        sys.stdout = self.stdout
         self.file.close()
 
     def write(self, data):
@@ -52,6 +61,8 @@ class Tee(object):
         if self.jobId is not None and file_uploader_server_url is not None:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+                if "Please check log.txt and result.json" in data:
+                    self.log_containing_error = True
                 try:
                     self.client.post(f"{file_uploader_server_url}/python", json={"jobId": self.jobId, "line": data})
                 except:
@@ -87,7 +98,7 @@ class Guard(object):
             with open(f"{self.directory}/error", "w"):
                 return
         else:
-            if all([r.statusCode < 400 for r in self.results]):
+            if all([int(re.sub("[^0-9]", "", e.status)) < 400 for r in self.results for e in r.entries]):
                 print("🥰 Finish without any errors")
                 with open(f"{self.directory}/done", "w"):
                     return
