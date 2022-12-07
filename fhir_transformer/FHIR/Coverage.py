@@ -1,13 +1,16 @@
 from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Entry import Entry
-from fhir_transformer.FHIR.supports.support import Identifier
 
 
-class Location(FHIRResource):
-    def __init__(self, station: str, hospital_blockchain_address: str):
-        super(Location, self).__init__(resource_type="Location")
-        self._station = station
-        self._hospital_blockchain_address = hospital_blockchain_address
+class Coverage(FHIRResource):
+    def __getstate__(self):
+        return super().__getstate__()
+
+    def __init__(self, personal_id: str):
+        super(Coverage, self).__init__(resource_type="Coverage")
+        self._personal_id = personal_id
+        self.meta = Coverage.meta
+        self.status = Coverage.status
 
     def create_entry(self) -> Entry:
         entry = Entry(f"Location?identifier=https://sil-th.org/CSOP/station|{self._station}", self, {
@@ -17,12 +20,23 @@ class Location(FHIRResource):
         })
         return entry
 
-    def __getstate__(self):
-        return super().__getstate__()
+    meta = {
+               "profile": [
+                   "https://sil-th.org/fhir/StructureDefinition/eclaim-coverage"
+               ]
+           },
 
-    def get_resource_url(self) -> str:
-        return f"{self.resourceType}?identifier={self.identifier[0].get_string_for_reference()}"
+    @property
+    def identifier(self) -> list[dict[str, str]]:
+        return [
+            {
+                "system": "https://www.dopa.go.th",
+                "value": f"{self._personal_id}"
+            }
+        ]
 
+    status: str = "active",
+    '''
     @property
     def text(self) -> dict[str, str]:
         return {
@@ -30,9 +44,6 @@ class Location(FHIRResource):
             "div": f"<div xmlns=\"http://www.w3.org/1999/xhtml\">Station ID: {self._station}</div>"
         }
 
-    @property
-    def identifier(self) -> list[Identifier]:
-        return [Identifier("https://sil-th.org/CSOP/station", f"{self._station}")]
 
     @property
     def type(self) -> list[dict[str, list[dict[str, str]]]]:
@@ -53,3 +64,4 @@ class Location(FHIRResource):
         return {
             "reference": f"Organization/{self._hospital_blockchain_address}"
         }
+    '''

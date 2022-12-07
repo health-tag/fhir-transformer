@@ -1,18 +1,5 @@
 from dataclasses import dataclass
 
-@dataclass
-class PersonItem:
-    cid: str
-    pid: str
-    hn: str
-    name: str
-    surname: str
-    gender: str
-
-@dataclass
-class PersonCSV:
-    hospital_code: str
-    items_dict: dict[str, PersonItem]
 
 @dataclass
 class DrugItem:
