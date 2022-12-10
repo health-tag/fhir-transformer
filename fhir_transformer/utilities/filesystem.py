@@ -2,6 +2,7 @@ import os
 import uuid
 import zipfile
 from datetime import datetime
+from importlib import util
 from pathlib import Path, PurePath
 
 import jsonpickle
@@ -9,6 +10,7 @@ from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED, EVENT_TY
 from watchdog.observers.polling import PollingObserver
 
 from fhir_transformer.csop.processor import process
+
 from fhir_transformer.utilities.logging import Tee, Guard
 
 
@@ -141,4 +143,12 @@ def run_csop_folder(folder_path: Path):
             print(f"Processing {bill_trans_xml_path.name} AND {bill_disp_xml_path.name}")
             process(processed_results=results, bill_trans_xml_path=str(bill_trans_xml_path),
                     bill_disp_xml_path=str(bill_disp_xml_path))
+            # Update HealthTAG if applicable
+            ht_spec = util.find_spec("fhir_transformer.healthtag.update_patient")
+            if ht_spec is not None:
+                print(f"Calling HealthTAG server to update metadata")
+                #from fhir_transformer.healthtag.update_patient import update_healthtag_database
+                ht_module = util.module_from_spec(ht_spec)
+                ht_spec.loader.exec_module(ht_module)
+                ht_module.update_healthtag_database()
             return
