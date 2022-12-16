@@ -4,6 +4,7 @@ import zipfile
 from datetime import datetime
 from importlib import util
 from pathlib import Path, PurePath
+import traceback
 
 import jsonpickle
 from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED, EVENT_TYPE_CREATED
@@ -149,6 +150,8 @@ def run_csop_folder(folder_path: Path):
                 print(f"Calling HealthTAG server to update metadata")
                 #from fhir_transformer.healthtag.update_patient import update_healthtag_database
                 ht_module = util.module_from_spec(ht_spec)
-                ht_spec.loader.exec_module(ht_module)
-                ht_module.update_healthtag_database()
+                try:
+                    ht_spec.loader.exec_module(ht_module)
+                except:
+                    traceback.print_exc()
             return
