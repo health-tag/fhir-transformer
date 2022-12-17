@@ -63,6 +63,8 @@ class Patient(FHIRResource):
         # CSOP Only
         self._member_number: str | None = None
 
+        self._prompt_care:str | None = None
+
     def create_entry(self) -> Entry:
         # Note: urn:uuid: is only working in transaction only. It's better to use full URL instead
         # Old urn urn:uuid:Patient/{self._hospital_code}/{self._hospital_number}
@@ -110,6 +112,8 @@ class Patient(FHIRResource):
         ]
         if (self._member_number is not None) and (self._member_number.strip() != ""):
             identity_list.append(Identifier("https://sil-th.org/CSOP/memberNo", f"{self._member_number}"))
+        if (self._prompt_care is not None) and (self._prompt_care.strip() != ""):
+            identity_list.append(Identifier("https://healthtag.io", f"{self._prompt_care}"))
         return identity_list
 
     @property
@@ -163,7 +167,7 @@ class Patient(FHIRResource):
         }
 
 
-class PatientBuilder(Builder[ Patient]):
+class PatientBuilder(Builder[Patient]):
     def __init__(self):
         super().__init__(Patient)
 
@@ -204,6 +208,10 @@ class PatientBuilder(Builder[ Patient]):
 
     def set_managing_organization_ref(self, organization: Organization):
         self._product._managingOrganizationURL = organization.get_resource_url()
+        return self
+
+    def add_prompt_care(self, id: str):
+        self._product._prompt_care = id
         return self
 
     def add_general_practitioner_organization_ref(self, organization: Organization):

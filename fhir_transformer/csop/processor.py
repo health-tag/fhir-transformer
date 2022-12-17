@@ -8,6 +8,7 @@ from fhir_transformer.csop.files.billdisp import open_bill_disp_xml
 from fhir_transformer.csop.files.billtrans import open_bill_trans_xml
 from fhir_transformer.fhir_transformer_config import hospital_blockchain_address
 from fhir_transformer.models.result import BundleResult
+from fhir_transformer.utilities.networking import get_ht_identifier
 from fhir_transformer.utilities.processing import send_singletype_bundle, bundle_cycler
 
 
@@ -44,10 +45,15 @@ def process(processed_results: list[BundleResult], bill_trans_xml_path: str, bil
             practitioner = practitioners[bill_disp_item.license_id]
 
         if matched_bill_trans_item.pid not in patients.keys():
-            patients[matched_bill_trans_item.pid] = patient = patient_builder.from_csop(matched_bill_trans_item) \
+            patient_unfinished = patient_builder.from_csop(matched_bill_trans_item) \
                 .set_managing_organization_ref(organization) \
                 .add_general_practitioner_organization_ref(organization) \
-                .product
+                .productWithoutReset
+            prompt_care = get_ht_identifier(patient_unfinished.id)
+            if prompt_care is not None:
+                patient_builder.add_prompt_care(prompt_care)
+
+            patients[matched_bill_trans_item.pid] = patient = patient_builder.product
         else:
             patient = patients[matched_bill_trans_item.pid]
 

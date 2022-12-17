@@ -25,7 +25,7 @@ class Coding:
         return f"{self.system}|{self.code}"
 
 
-class  Builder(ABC, Generic[T]):
+class Builder(ABC, Generic[T]):
     def __init__(self, factory: Callable[[None], T]):
         self._product: T = None
         self._factory = factory
@@ -39,4 +39,9 @@ class  Builder(ABC, Generic[T]):
     def product(self):
         product = self._product
         self.reset()
+        return product
+
+    @property
+    def productWithoutReset(self):
+        product = self._product
         return product
