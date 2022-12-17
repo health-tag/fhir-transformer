@@ -81,15 +81,18 @@ class Handler(FileSystemEventHandler):
                 workingdir = findWorkingFolder(source_path)
                 if workingdir is not False:
                     zip_folder = workingdir / "uploads" / id
-                    zip_ref.extractall(zip_folder)
-                    files = zip_folder.glob("*")
-                    meta = {"id": id, "description": f"Automatically created from {source_path.name}",
-                            "files": [f.name for f in files],
-                            "type": "csop", "dataDate": datetime.now(), "taskDate": datetime.now()}
-                    with open(zip_folder / "info.json", "w") as info_file:
-                        info_file.write(jsonpickle.encode(meta, unpicklable=False, indent=True))
-                    with open(zip_folder / "csop", "w") as task_file:
-                        task_file.write("")
+                    try:
+                        zip_ref.extractall(zip_folder)
+                        files = zip_folder.glob("*")
+                        meta = {"id": id, "description": f"Automatically created from {source_path.name}",
+                                "files": [f.name for f in files],
+                                "type": "csop", "dataDate": datetime.now(), "taskDate": datetime.now()}
+                        with open(zip_folder / "info.json", "w") as info_file:
+                            info_file.write(jsonpickle.encode(meta, unpicklable=False, indent=True))
+                        with open(zip_folder / "csop", "w") as task_file:
+                            task_file.write("")
+                    except:
+                        print(f"Something wrong when try to extract {source_path}")
             os.remove(source_path)
             return
         job_folder_path = source_path.parent
@@ -98,7 +101,10 @@ class Handler(FileSystemEventHandler):
             match result:
                 case "csop":
                     Handler.pendingJob[job_folder_path.name] = True
-                    run_csop_folder(job_folder_path)
+                    try:
+                        run_csop_folder(job_folder_path)
+                    except:
+                        pass
                     Handler.pendingJob[job_folder_path.name] = False
 
 
@@ -147,11 +153,12 @@ def run_csop_folder(folder_path: Path):
             # Update HealthTAG if applicable
             ht_spec = util.find_spec("fhir_transformer.healthtag.update_patient")
             if ht_spec is not None:
-                print(f"Calling HealthTAG server to update metadata")
                 #from fhir_transformer.healthtag.update_patient import update_healthtag_database
                 ht_module = util.module_from_spec(ht_spec)
                 try:
                     ht_spec.loader.exec_module(ht_module)
+                    print(f"Calling HealthTAG server to update metadata")
+                    ht_module.update_promptcare_id()
                 except:
                     traceback.print_exc()
             return

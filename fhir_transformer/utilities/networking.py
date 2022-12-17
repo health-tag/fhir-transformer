@@ -17,6 +17,19 @@ actual_header = {
 }
 
 
+def get_ht_identifier(patient_fhir_id: str):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            res = requests.get(f"{base_fhir_url}/Patient/{patient_fhir_id}", headers=actual_header, verify=False)
+            data = res.json()
+            for ident in data["identifier"]:
+                if ident["system"] == "https://healthtag.io":
+                    return ident["value"]
+        except:
+            return None
+
+
 def post_bundle_to_fhir_server(bundle: Bundle) -> BundleResult:
     payload = jsonpickle.encode(bundle, unpicklable=False)
     with warnings.catch_warnings():
@@ -26,8 +39,9 @@ def post_bundle_to_fhir_server(bundle: Bundle) -> BundleResult:
             fhir_response = res.json()
             if fhir_response["resourceType"] == "OperationOutcome":
                 bundle_result = BundleResult(591,
-                                    [EntryResult(entry.resource.resourceType, entry.fullUrl, "591 FHIR Server Error") for entry in
-                                     bundle.entry])
+                                             [EntryResult(entry.resource.resourceType, entry.fullUrl,
+                                                          "591 FHIR Server Error") for entry in
+                                              bundle.entry])
                 bundle_result.fhirErrorResponse = fhir_response
                 return bundle_result
             results = [EntryResult(entry.resource.resourceType, entry.fullUrl) for entry in bundle.entry]
@@ -45,5 +59,6 @@ def post_bundle_to_fhir_server(bundle: Bundle) -> BundleResult:
             traceback.print_exc()
             print("-- END EXCEPTION --")
             return BundleResult(592,
-                                [EntryResult(entry.resource.resourceType, entry.fullUrl, "592 Python Exception Occurs") for entry in
+                                [EntryResult(entry.resource.resourceType, entry.fullUrl, "592 Python Exception Occurs")
+                                 for entry in
                                  bundle.entry])
