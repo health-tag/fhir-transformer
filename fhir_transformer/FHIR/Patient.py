@@ -5,7 +5,7 @@ from fhir_transformer.FHIR.Entry import Entry
 from fhir_transformer.FHIR.Organization import Organization
 from fhir_transformer.FHIR.supports.support import Identifier, Coding, Builder
 from fhir_transformer.csop.files.billtrans import BillTransItem
-from fhir_transformer.eclaims.files.PatCsv2 import PatCsvItem
+from fhir_transformer.eclaims.files.E_2PatCsv import PatCsvRow
 from fhir_transformer.folders43.files.PersonCsv import PersonCsvItem
 
 
@@ -191,7 +191,7 @@ class PatientBuilder(Builder[ Patient]):
         self._product._occupational_code = item.occupational_code
         return self
 
-    def from_eclaims(self, item: PatCsvItem):
+    def from_eclaims(self, item: PatCsvRow):
         self._product._personal_id = item.citizen_id
         self._product._name = item.name
         self._product._surname = item.surname

@@ -6,7 +6,7 @@ from fhir_transformer.FHIR.Base import FHIRResource
 from fhir_transformer.FHIR.Encounter import encounter_identifier_system
 from fhir_transformer.FHIR.Patient import patient_HN_identifier_system, Patient
 from fhir_transformer.FHIR.supports.support import Coding
-from fhir_transformer.eclaims.files.OpdCsv3 import OpdCsvItem
+from fhir_transformer.eclaims.files.E_3OpdCsv import OpdCsvRow
 
 
 class ObservationType(Enum):
@@ -32,7 +32,7 @@ class ObservationBuilder:
                 self._product = BodyTemperatureObservation()
         return self
 
-    def from_eclaim_opd_csv(self, item: OpdCsvItem):
+    def from_eclaim_opd_csv(self, item: OpdCsvRow):
         self._product._service_id = item.service_id
         self._product.effective_datetime = item.effective_datetime
         if type(self._product) is BloodPressureObservation:

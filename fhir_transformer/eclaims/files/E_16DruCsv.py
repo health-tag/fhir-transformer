@@ -5,7 +5,7 @@ import pandas as pd
 
 
 @dataclass
-class DruCsvItem:
+class DruCsvRow:
     hospital_code: str
     """hcode"""
     hospital_number: str
@@ -54,24 +54,24 @@ class DruCsvItem:
 #hcode|hn|an|clinic|person_id|date_serv|did|didname|amount|drugpric|drugcost|didstd|unit|unit_pack|seq|drugremark|pa_no|totcopay|use_status|total
 #11218|651218347||0011|1842228343492|20220912|D0000910|Guaifenesin 200 mg tab|20.00|1.0|0.24|101124000014203120381144|เม็ด||065156262|||0.00|2|20.00
 
-def open_dru_csv(file_path: PathLike) -> list[DruCsvItem]:
+def open_dru_csv(file_path: PathLike) -> list[DruCsvRow]:
     df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
     df.columns = df.columns.str.upper()
-    items = list[DruCsvItem]()
+    items = list[DruCsvRow]()
     for i, row in df.iterrows():
-        items.append(DruCsvItem(hospital_code=row["hcode"],
-                                hospital_number=row["hn"],
-                                admission_number=row["an"],
-                                clinic_number=row["clinic"],
-                                person_id=row["person_id"],
-                                service_date=row["date_serv"],
-                                drug_id=row["did"],
-                                drug_name=row["didname"],
-                                amount=row["amount"],
-                                drug_id24=row["didstd"],
-                                unit=row["unit"],
-                                unit_pack=row["unit_pack"],
-                                sequence=row["seq"],
-                                use_status=row["use_status"],
-                                ))
+        items.append(DruCsvRow(hospital_code=row["hcode"],
+                               hospital_number=row["hn"],
+                               admission_number=row["an"],
+                               clinic_number=row["clinic"],
+                               person_id=row["person_id"],
+                               service_date=row["date_serv"],
+                               drug_id=row["did"],
+                               drug_name=row["didname"],
+                               amount=row["amount"],
+                               drug_id24=row["didstd"],
+                               unit=row["unit"],
+                               unit_pack=row["unit_pack"],
+                               sequence=row["seq"],
+                               use_status=row["use_status"],
+                               ))
     return items
