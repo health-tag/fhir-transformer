@@ -98,9 +98,18 @@ def process_all(_1ins_path: PathLike, _2pat_path:PathLike, _3opd_path:PathLike, 
         [Organization(hospital_code, hospital_code, hospital_code) for hospital_code in unique_hosp_code],
         processed_results)
 
+    patients = []
     for sequence,matched in sequence_dict.items():
         # Patient
         patient_builder = PatientBuilder()
+        patient_builder.from_eclaims(matched.row_2pat)
+        patient_builder.set_managing_organization_ref()
+        patient_builder.add_general_practitioner_organization_ref()
+        patient = patient_builder.product
+        patients.append(patient)
+        # Coverage
+
+        # Diagnosis
 
     return processed_results
 
