@@ -151,7 +151,11 @@ def run_csop_folder(folder_path: Path):
             process(processed_results=results, bill_trans_xml_path=str(bill_trans_xml_path),
                     bill_disp_xml_path=str(bill_disp_xml_path))
             # Update HealthTAG if applicable
-            ht_spec = util.find_spec("fhir_transformer.healthtag.update_patient")
+            ht_spec = None
+            try:
+                ht_spec = util.find_spec("fhir_transformer.healthtag.update_patient")
+            except:
+                pass
             if ht_spec is not None:
                 #from fhir_transformer.healthtag.update_patient import update_healthtag_database
                 ht_module = util.module_from_spec(ht_spec)
