@@ -14,12 +14,12 @@ class OpdCsvRow:
     """ SEQ """
     hospital_number: str = None
     """ HN """
-    clinic_number: str = None
+    clinic: str = None
     """ CLINIC """
-    visit_date: str = None
+    dateopd: str = None
     """ DATEOPD """
-    visit_time: str = None
-    """ TIMEOPD """
+    timeopd: str = None
+    uuc: str = None
 
 
 
@@ -30,7 +30,8 @@ def open_opd_csv(file_path: PathLike) -> list[OpdCsvRow]:
     for i, row in df.iterrows():
         items.append(OpdCsvRow(sequence=row["seq"],
                                hospital_number=row["hn"],
-                               clinic_number=row["clinic"],
-                               visit_date=row["dateopd"],
-                               visit_time=row["timeopd"]))
+                               clinic=row["clinic"],
+                               dateopd=row["dateopd"],
+                               timeopd=row["timeopd"],
+                               uuc=row["uuc"]))
     return items

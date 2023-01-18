@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from os import PathLike
 
+from fhir_transformer.FHIR.Account import AccountBuilder
 from fhir_transformer.FHIR.Coverage import CoverageBuilder
 from fhir_transformer.FHIR.MedicationDispense import MedicationDispenseBuilder
 from fhir_transformer.FHIR.Organization import Organization
@@ -126,59 +127,22 @@ def process_all(processed_results: list[BundleResult],_1ins_path: PathLike, _2pa
         patients_dict[row.hospital_number]= patient_builder.product
 
     coverages = []
+    accounts = []
     coverage_builder = CoverageBuilder()
+    account_builder = AccountBuilder()
     for sequence,matched in joined_opd_files.items():
         # Coverage
         if matched.row_1ins is not None and matched.row_11cht is not None:
             coverage_builder.from_eclaims(matched.row_1ins, matched.row_11cht)
             coverage_builder.set_beneficiary_ref(patients_dict[matched.row_1ins.hospital_number])
             coverages.append(coverage_builder.product)
+        # Account
+        if matched.row_3opd is not None:
+            account_builder.from_eclaims(matched.row_3opd)
+            account_builder.set_hospital_code(organizations_dict[matched.row_3opd.hospital_number])
+            accounts.append(account_builder.product)
 
     bundle_cycler(patients_dict.values(), processed_results)
-    send_singletype_bundle(
-        coverages,
-        processed_results)
+    bundle_cycler(coverages, processed_results)
+    bundle_cycler(accounts, processed_results)
     return processed_results
-
-def process_ins_csv_path(path: PathLike) -> list[BundleResult]:
-    processed_results = list[BundleResult]()
-
-    # Organization
-    ins_csv_items = open_ins_csv(path)
-    unique_hosp_code = set([item.main_hospital_code for item in ins_csv_items])
-
-    send_singletype_bundle(
-        [Organization(hospital_code, hospital_code, hospital_code) for hospital_code in unique_hosp_code],
-        processed_results)
-    return processed_results
-
-
-def process_pat_csv_path(path: PathLike) -> list[BundleResult]:
-    # Builder
-    patient_builder = PatientBuilder()
-
-    processed_results = list[BundleResult]()
-
-    # Patient
-    pat_csv_items = open_pat_csv(path)
-    send_singletype_bundle([patient_builder.from_eclaims(item).product for item in pat_csv_items],
-                           processed_results)
-    return processed_results
-
-
-def process_dru_csv_path(path: PathLike) -> list[BundleResult]:
-    # Builder
-    medication_builder = MedicationDispenseBuilder()
-
-    processed_results = list[BundleResult]()
-
-    # Patient
-    dru_csv_items = open_dru_csv(path)
-    send_singletype_bundle([medication_builder.from_eclaims(item).product for item in dru_csv_items],
-                           processed_results)
-    return processed_results
-
-
-#def process_all(ins_csv_path: PathLike, pat_csv_path: PathLike) -> list[BundleResult]:
-#    return [*process_ins_csv_path(ins_csv_path),
-#            *process_pat_csv_path(pat_csv_path)]
