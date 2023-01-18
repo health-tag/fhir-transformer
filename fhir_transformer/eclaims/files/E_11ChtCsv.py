@@ -17,7 +17,7 @@ class ChtCsvRow:
     sequence:str
 
 def open_cht_csv(file_path: PathLike) -> list[ChtCsvRow]:
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
     df.columns = df.columns.str.lower()
     items = list[ChtCsvRow]()
     for i, row in df.iterrows():

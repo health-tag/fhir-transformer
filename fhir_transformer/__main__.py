@@ -9,7 +9,8 @@ from pathlib import Path
 
 import jsonpickle
 
-from fhir_transformer.utilities.filesystem import WorkingDirWatcher, checkfiles_in_folder, run_csop_folder
+from fhir_transformer.utilities.filesystem import WorkingDirWatcher, checkfiles_in_folder, run_csop_folder, \
+    run_eclaims_folder
 
 
 def banner():
@@ -45,6 +46,8 @@ def check_job_folder(folder_path: Path, iteration = 0):
                 match result:
                     case "csop":
                         run_csop_folder(sub_path)
+                    case "eclaims":
+                        run_eclaims_folder(sub_path)
             elif ("csop_zips" in str(sub_path).lower()) and (sub_path.suffix.lower() == ".zip"):
                 with zipfile.ZipFile(sub_path, 'r') as zip_ref:
                     id = str(uuid.uuid4())

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from os import PathLike
 
 import pandas as pd
 
@@ -22,8 +23,8 @@ class OpdCsvRow:
 
 
 
-def open_opd_csv(file_path: str) -> list[OpdCsvRow]:
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+def open_opd_csv(file_path: PathLike) -> list[OpdCsvRow]:
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
     df.columns = df.columns.str.lower()
     items = list[OpdCsvRow]()
     for i, row in df.iterrows():

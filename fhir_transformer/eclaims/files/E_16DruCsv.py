@@ -55,8 +55,8 @@ class DruCsvRow:
 #11218|651218347||0011|1842228343492|20220912|D0000910|Guaifenesin 200 mg tab|20.00|1.0|0.24|101124000014203120381144|เม็ด||065156262|||0.00|2|20.00
 
 def open_dru_csv(file_path: PathLike) -> list[DruCsvRow]:
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
-    df.columns = df.columns.str.upper()
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
+    df.columns = df.columns.str.lower()
     items = list[DruCsvRow]()
     for i, row in df.iterrows():
         items.append(DruCsvRow(hospital_code=row["hcode"],

@@ -9,6 +9,7 @@ from watchdog.events import FileSystemEventHandler, EVENT_TYPE_DELETED, EVENT_TY
 from watchdog.observers.polling import PollingObserver
 
 from fhir_transformer.csop.processor import process
+from fhir_transformer.eclaims.processor import process_all as eclaims_process
 from fhir_transformer.utilities.logging import Tee, Guard
 
 
@@ -17,6 +18,16 @@ def checkfiles_in_folder(folder_path: Path):
     csop_checklist = dict[str, bool]()
     csop_checklist["billdisp"] = False
     csop_checklist["billtran"] = False
+
+    elaims_checklist = dict[str, bool]()
+    elaims_checklist["ins"] = False
+    elaims_checklist["pat"] = False
+    elaims_checklist["opd"] = False
+    elaims_checklist["orf"] = False
+    elaims_checklist["odx"] = False
+    elaims_checklist["oop"] = False
+    elaims_checklist["cht"] = False
+    elaims_checklist["dru"] = False
 
     folders43_checklist = dict[str, bool]()
     folders43_checklist["person"] = False
@@ -38,15 +49,22 @@ def checkfiles_in_folder(folder_path: Path):
         for key, value in iter(folders43_checklist.items()):
             if key in file.name.lower():
                 folders43_checklist[key] = True
+        for key, value in iter(elaims_checklist.items()):
+            if key in file.name.lower():
+                elaims_checklist[key] = True
 
     is_csop = all(csop_checklist.values()) and not is_done
     is_folders43 = all(folders43_checklist.values()) and not is_done
+    is_eclaims = all(elaims_checklist.values()) and not is_done
     if is_csop:
         print(f"{folder_path} will be processed as CSOP.")
         return "csop"
     elif is_folders43:
         print(f"{folder_path} will be processed as 43 Folders.")
         return "folders43"
+    elif is_eclaims:
+        print(f"{folder_path} will be processed as E-Claims Folders.")
+        return "eclaims"
     else:
         return None
 
@@ -141,4 +159,50 @@ def run_csop_folder(folder_path: Path):
             print(f"Processing {bill_trans_xml_path.name} AND {bill_disp_xml_path.name}")
             process(processed_results=results, bill_trans_xml_path=str(bill_trans_xml_path),
                     bill_disp_xml_path=str(bill_disp_xml_path))
+            return
+
+
+def run_eclaims_folder(folder_path: Path):
+    directory = folder_path.resolve()
+    with Tee(f"{directory}/log.txt", jobId=directory.name):
+        with Guard(directory) as results:
+            print(f"Converting Eclaim Files in {folder_path.absolute()}")
+            files = list(folder_path.glob("*"))
+            if len(files) == 0:
+                print(f"No file found!")
+            else:
+                print(f"{len(files)} file found")
+                for file in files:
+                    print(file)
+            _1ins_path: Path | None = None
+            _2pat_path: Path | None = None
+            _3opd_path: Path | None = None
+            _4orf_path: Path | None = None
+            _5odx_path: Path | None = None
+            _6oop_path: Path | None = None
+            _11cht_path: Path | None = None
+            _16dru_path: Path | None = None
+            for file in files:
+                if "ins" in file.name.lower():
+                    _1ins_path = file
+                if "pat" in file.name.lower():
+                    _2pat_path = file
+                if "opd" in file.name.lower():
+                    _3opd_path = file
+                if "orf" in file.name.lower():
+                    _4orf_path = file
+                if "odx" in file.name.lower():
+                    _5odx_path = file
+                if "oop" in file.name.lower():
+                    _6oop_path = file
+                if "cht" in file.name.lower():
+                    _11cht_path = file
+                if "dru" in file.name.lower():
+                    _16dru_path = file
+
+            if _1ins_path is None or _2pat_path is None or _3opd_path is None or _4orf_path is None or _5odx_path is None or _6oop_path is None or _11cht_path is None or _16dru_path is None:
+                print("Requires all of ins pat opd orf odx oop cht dru files")
+                return
+            print(f"Processing {_1ins_path.name} {_2pat_path.name} {_3opd_path.name} {_4orf_path.name} {_5odx_path.name} {_6oop_path.name} {_11cht_path.name} {_16dru_path.name}")
+            eclaims_process(results,_1ins_path=str(_1ins_path), _2pat_path=str(_2pat_path), _3opd_path=str(_3opd_path), _4orf_path=str(_4orf_path), _5odx_path=str(_5odx_path), _6oop_path=str(_6oop_path), _11cht_path=str(_11cht_path), _16dru_path=str(_16dru_path))
             return

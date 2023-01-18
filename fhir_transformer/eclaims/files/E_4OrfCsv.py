@@ -12,20 +12,20 @@ dateopd clinic ไม่ใช้ เพราะใช้จาก 3 OPD ได
 
 
 @dataclass
-class OrsCsvRow:
+class OrfCsvRow:
     sequence: str = None
     hospital_number: str = None
     refer: str = None
     refer_type: str = None
 
 
-def open_ors_csv(file_path: PathLike) -> list[OrsCsvRow]:
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+def open_orf_csv(file_path: PathLike) -> list[OrfCsvRow]:
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
     df.columns = df.columns.str.lower()
-    items = list[OrsCsvRow]()
+    items = list[OrfCsvRow]()
     for i, row in df.iterrows():
-        items.append(OrsCsvRow(sequence=row["seq"],
+        items.append(OrfCsvRow(sequence=row["seq"],
                                hospital_number=row["hn"],
                                refer=row["refer"],
-                               refer_type=row["refer_type"]))
+                               refer_type=row["refertype"]))
     return items

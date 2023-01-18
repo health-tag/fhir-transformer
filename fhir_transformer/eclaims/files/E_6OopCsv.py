@@ -20,15 +20,15 @@ class OopCsvRow:
 
 
 def open_oop_csv(file_path: PathLike) -> list[OopCsvRow]:
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
     df.columns = df.columns.str.lower()
     items = list[OopCsvRow]()
     for i, row in df.iterrows():
         items.append(OopCsvRow(sequence=row["seq"],
-                                hospital_number=row["HN"],
-                                dateopd=row["datedx"],
+                                hospital_number=row["hn"],
+                                dateopd=row["dateopd"],
                                 clinic=row["clinic"],
-                                operation=row["diag"],
-                                dropid=row["dxtype"],
+                                operation=row["oper"],
+                                dropid=row["dropid"],
                                 citizen_id=row["person_id"]))
     return items

@@ -23,7 +23,7 @@ class OdxCsvRow:
 
 def open_odx_csv(file_path: PathLike) -> list[OdxCsvRow]:
 
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
     df.columns = df.columns.str.lower()
     items = list[OdxCsvRow]()
     for i, row in df.iterrows():

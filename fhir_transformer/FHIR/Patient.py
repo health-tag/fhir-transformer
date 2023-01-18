@@ -26,6 +26,10 @@ class MaritalStatus(Enum):
     Single = 1  # โสด
     Married = 2  # สมรส
     Widow = 3  # หม้าย
+    Divorced = 4  # หย่า
+    LegallySeparated = 5  # แยกทางกฎหมาย
+    Monk = 6  # แยกทางกฎหมาย
+    Unknown = 9  # หม้าย
 
     def __getstate__(self):
         match self.value:
@@ -35,6 +39,14 @@ class MaritalStatus(Enum):
                 return "M"
             case 3:
                 return "W"
+            case 4:
+                return "D"
+            case 5:
+                return "L"
+            case 6:
+                return "U"
+            case 9:
+                return "UNK"
 
 
 patient_HN_identifier_system = "https://sil-th.org/fhir/Id/hn"

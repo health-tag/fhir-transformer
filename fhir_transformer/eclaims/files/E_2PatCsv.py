@@ -21,7 +21,7 @@ hcode|hn       |changwat|amphur|dob     |sex|marriage|occupa|nation|person_id   
 11218|651218347|60      |11    |19580101|1  |2       |505   |099   |1842228343492|ตัวอย่างชื่อ-6138 ตัวอย่างนามสกุล-4970,นาย|นาย  |ตัวอย่างชื่อ-6138|ตัวอย่างนามสกุล-4970|1
 """
 def open_pat_csv(file_path: PathLike) -> list[PatCsvRow]:
-    df = pd.read_csv(file_path, encoding="utf8", delimiter="|")
+    df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
     df.columns = df.columns.str.lower()
     items = list[PatCsvRow]()
     for i, row in df.iterrows():

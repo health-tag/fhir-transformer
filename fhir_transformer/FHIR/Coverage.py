@@ -22,16 +22,19 @@ class Coverage(FHIRResource):
         self._patient_type: str | None = None
 
     def create_entry(self) -> Entry:
-        entry = Entry(f"Location?identifier=https://sil-th.org/CSOP/station|{self._station}", self, {
+        entry = Entry(self.get_resource_id_url(), self, {
             "method": "PUT",
-            "url": f"Location?identifier=https://sil-th.org/CSOP/station|{self._station}",
-            "ifNoneExist": f"identifier=https://sil-th.org/CSOP/station|{self._station}"
+            "url": self.get_resource_id_url(),
+            "ifNoneExist": self.id
         })
         return entry
 
     @property
     def id(self):
-        return f"CID-{self._personal_id}"
+        return f"Coverage-{self._personal_id}"
+
+    def get_resource_id_url(self) -> str:
+        return f"{self.resourceType}/{self.id}"
 
     @property
     def extension(self):
@@ -155,11 +158,11 @@ class CoverageBuilder(Builder[Coverage]):
         self._product._insurance_type = _1ins_row.insurance_type
         self._product._main_hospital_code = _1ins_row.main_hospital_code
         self._product._primary_care_hospital_code = _1ins_row.primary_care_hospital_code
-        self._product._expiration_date = _1ins_row.ex
+        #self._product._expiration_date = _1ins_row.dateexp ข้อมูลตัวอย่างไม่มี
         self._product._subtype = _1ins_row.subtype
         self._product._patient_type = _11cht_row.patient_type
         return self
 
     def set_beneficiary_ref(self, patient: Patient):
-        self._product._patient_url = Patient.get_resource_url()
+        self._product._patient_url = patient.get_resource_url()
         return self
