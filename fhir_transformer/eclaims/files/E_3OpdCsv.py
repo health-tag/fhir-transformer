@@ -11,13 +11,10 @@ hn|clinic|dateopd|timeopd|seq|uuc
 @dataclass
 class OpdCsvRow:
     sequence: str = None
-    """ SEQ """
     hospital_number: str = None
-    """ HN """
+    optype: str = None
     clinic: str = None
-    """ CLINIC """
     dateopd: str = None
-    """ DATEOPD """
     timeopd: str = None
     uuc: str = None
 
@@ -31,6 +28,7 @@ def open_opd_csv(file_path: PathLike) -> list[OpdCsvRow]:
         items.append(OpdCsvRow(sequence=row["seq"],
                                hospital_number=row["hn"],
                                clinic=row["clinic"],
+                               optype=5,
                                dateopd=row["dateopd"],
                                timeopd=row["timeopd"],
                                uuc=row["uuc"]))

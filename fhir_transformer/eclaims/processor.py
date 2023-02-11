@@ -1,11 +1,28 @@
+import multiprocessing
 from dataclasses import dataclass
 from os import PathLike
 
-from fhir_transformer.FHIR.Account import AccountBuilder
-from fhir_transformer.FHIR.Coverage import CoverageBuilder
-from fhir_transformer.FHIR.MedicationDispense import MedicationDispenseBuilder
-from fhir_transformer.FHIR.Organization import Organization
-from fhir_transformer.FHIR.Patient import PatientBuilder, Patient
+import numpy as np
+from fhir.resources.codeableconcept import CodeableConcept
+from fhir.resources.coverage import Coverage, CoverageClass
+from fhir.resources.fhirtypes import Id, Code, String, ExtensionType, Uri
+from fhir.resources.humanname import HumanName
+from fhir.resources.extension import Extension
+# from fhir_transformer.FHIR.Account import AccountBuilder
+# from fhir_transformer.FHIR.Coverage import CoverageBuilder
+# from fhir_transformer.FHIR.MedicationDispense import MedicationDispenseBuilder
+# from fhir_transformer.FHIR.Organization import Organization
+# from fhir_transformer.FHIR.Patient import PatientBuilder, Patient
+
+from fhir.resources.organization import Organization
+from fhir.resources.identifier import Identifier
+from fhir.resources.patient import Patient
+from fhir.resources.reference import Reference
+from fhir.resources.coding import Coding
+from fhir.resources.period import Period
+from fhir.resources.account import Account
+from fhir.resources.encounter import Encounter, EncounterLocation, EncounterDiagnosis, EncounterHospitalization
+
 from fhir_transformer.eclaims.files.E_11ChtCsv import open_cht_csv, ChtCsvRow
 from fhir_transformer.eclaims.files.E_3OpdCsv import open_opd_csv, OpdCsvRow
 from fhir_transformer.eclaims.files.E_4OrfCsv import open_orf_csv, OrfCsvRow
@@ -15,24 +32,25 @@ from fhir_transformer.eclaims.files.E_2PatCsv import open_pat_csv, PatCsvRow
 from fhir_transformer.eclaims.files.E_5OdxCsv import open_odx_csv, OdxCsvRow
 from fhir_transformer.eclaims.files.E_6OopCsv import open_oop_csv
 from fhir_transformer.models.result import BundleResult
-from fhir_transformer.utilities.processing import send_singletype_bundle, bundle_cycler
+from fhir_transformer.utilities.processingNext import send_singletype_bundle, bundle_cycler
 from typing import Optional
+
 
 @dataclass
 class JoinedOpd:
     row_1ins: Optional[InsCsvRow] = None
-    #row_2pat: Optional[PatCsvRow]= None
-    row_3opd: Optional[OpdCsvRow]= None
-    row_4orf: Optional[OrfCsvRow]= None
-    row_5odx: Optional[OdxCsvRow]= None
-    row_6oop: Optional[OdxCsvRow]= None
-    row_11cht: Optional[ChtCsvRow]= None
-    row_16dru: Optional[DruCsvRow]= None
+    # row_2pat: Optional[PatCsvRow]= None
+    row_3opd: Optional[OpdCsvRow] = None
+    row_4orf: Optional[OrfCsvRow] = None
+    row_5odx: Optional[OdxCsvRow] = None
+    row_6oop: Optional[OdxCsvRow] = None
+    row_11cht: Optional[ChtCsvRow] = None
+    row_16dru: Optional[DruCsvRow] = None
 
 
-def process_all(processed_results: list[BundleResult],_1ins_path: PathLike, _2pat_path:PathLike, _3opd_path:PathLike, _4orf_path:PathLike,
-                _5odx_path: PathLike, _6oop_path:PathLike, _11cht_path: PathLike, _16dru_path:PathLike):
-
+def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2pat_path: PathLike, _3opd_path: PathLike,
+                _4orf_path: PathLike,
+                _5odx_path: PathLike, _6oop_path: PathLike, _11cht_path: PathLike, _16dru_path: PathLike):
     _1ins_rows = open_ins_csv(_1ins_path)
     _2pat_rows = open_pat_csv(_2pat_path)
     _3opd_rows = open_opd_csv(_3opd_path)
@@ -43,7 +61,7 @@ def process_all(processed_results: list[BundleResult],_1ins_path: PathLike, _2pa
     _11cht_rows = open_cht_csv(_11cht_path)
     _16dru_rows = open_dru_csv(_16dru_path)
 
-    joined_opd_files : dict[str, JoinedOpd]= dict()
+    joined_opd_files: dict[str, JoinedOpd] = dict()
 
     for row in _1ins_rows:
         if row.sequence not in joined_opd_files:
@@ -53,7 +71,7 @@ def process_all(processed_results: list[BundleResult],_1ins_path: PathLike, _2pa
         else:
             joined_opd_files[row.sequence].row_1ins = row
 
-    #for row in _2pat_rows:
+    # for row in _2pat_rows:
     #    if row.sequence not in joined_opd_files:
     #        o = JoinedOpd()
     #        o.row_2pat = row
@@ -104,45 +122,88 @@ def process_all(processed_results: list[BundleResult],_1ins_path: PathLike, _2pa
         if row.sequence not in joined_opd_files:
             o = JoinedOpd()
             o.row_16dru = row
-            joined_opd_files[row.sequence]=o
+            joined_opd_files[row.sequence] = o
         else:
             joined_opd_files[row.sequence].row_16dru = row
 
     # Organization
-    unique_hosp_code = set([item.main_hospital_code for item in _1ins_rows])
-    organizations = [Organization(hospital_code, hospital_code, hospital_code) for hospital_code in unique_hosp_code]
+    unique_hosp_code = set([item.main_hospital_code for item in _1ins_rows if isinstance(item.main_hospital_code, str)])
+    organizations = list[Organization]()
+    for hospital_code in unique_hosp_code:
+        o: Organization = Organization.construct()
+        o.identifier = [Identifier(system="https://www.nhso.go.th", value=hospital_code)]
+        o.id = Id(f"hcode-{hospital_code}")
+        organizations.append(o)
     organizations_dict = dict(zip(unique_hosp_code, organizations))
-    send_singletype_bundle(
-        organizations,
-        processed_results)
+    #send_singletype_bundle(organizations, processed_results)
 
     # Patient
-    patients_dict : dict[str, Patient]= dict()
-    patient_builder = PatientBuilder()
+    patients_dict: dict[str, Patient] = dict()
     for row in _2pat_rows:
-        patient_builder.from_eclaims(row)
-        for org in organizations:
-            if org._hospital_code == row.hospital_code:
-                patient_builder.set_managing_organization_ref(org)
-        patients_dict[row.hospital_number]= patient_builder.product
+        patient: Patient = Patient.construct()
+        patient.identifier = [
+            Identifier(system=Uri("https://www.dopa.go.th"), value=f"{row.citizen_id}"),
+            Identifier(system=Uri("https://terms.sil-th.org/id/th-cid"), value=f"{row.hospital_number}"),
+            Identifier(system=Uri("https://sil-th.org/fhir/Id/hn"), value=f"{row.hospital_number}"),
+        ]
+        patient.name = [HumanName(prefix=[String(row.title)], given=[String(row.name)], family=String(row.surname),
+                                  text=String(f"{row.title} {row.name} {row.surname}"))]
+        patient.gender = Code("M" if row.gender_number == 1 else "F")
+        matched_org = organizations_dict[row.hospital_code]
+        patient.managingOrganization = Reference(reference=matched_org.relative_path())
+        patient.id = Id(f"cid-{row.citizen_id}")
 
-    coverages = []
-    accounts = []
-    coverage_builder = CoverageBuilder()
-    account_builder = AccountBuilder()
-    for sequence,matched in joined_opd_files.items():
-        # Coverage
-        if matched.row_1ins is not None and matched.row_11cht is not None:
-            coverage_builder.from_eclaims(matched.row_1ins, matched.row_11cht)
-            coverage_builder.set_beneficiary_ref(patients_dict[matched.row_1ins.hospital_number])
-            coverages.append(coverage_builder.product)
-        # Account
-        if matched.row_3opd is not None:
-            account_builder.from_eclaims(matched.row_3opd)
-            account_builder.set_hospital_code(organizations_dict[matched.row_3opd.hospital_number])
-            accounts.append(account_builder.product)
+        patients_dict[row.hospital_number] = patient
+        for sequence, matched in joined_opd_files.items():
+            # Coverage
+            if matched.row_1ins is not None and matched.row_11cht is not None:
+                coverage: Coverage = Coverage.construct()
+                coverage.status = Code("active")
+                coverage.type = CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/ValueSet/vs-eclaim-coverage-use"), code=Code(matched.row_1ins.insurance_type))])
+                coverage.beneficiary = Reference(reference=patient.relative_path())
+                if isinstance(matched.row_1ins.insurance_expired_date,str):
+                    coverage.period = Period(end=matched.row_1ins.insurance_expired_date)
+                coverage.payor = [Reference(reference=matched_org.relative_path())]
+                coverage.class_fhir = [CoverageClass(type=CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/coverage-class"), code=Code("subplan"))]), value=String(matched.row_1ins.subtype)),
+                                       CoverageClass(type=CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/coverage-class"), code=Code("subplan"))]), value=String(matched.row_11cht.patient_type))]
+                coverage.extension = [Extension(
+                     url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-coverage-contracted-provider"),
+                     extension=[
+                         Extension(url=Uri("type"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-meta-provider-type-coverage"), code=Code("primary"), display=String("สถานบริการหลัก"))])),
+                         Extension(url=Uri("provider"), valueIdentifier=Identifier(system=Uri("https://terms.sil-th.org/id/th-moph-hcode"), value=String(matched.row_1ins.main_hospital_code)))
+                    ])]
+                coverage.id = Id(f"cid-{row.citizen_id}")
 
-    bundle_cycler(patients_dict.values(), processed_results)
-    bundle_cycler(coverages, processed_results)
-    bundle_cycler(accounts, processed_results)
+            if matched.row_3opd is not None:
+                # Account
+                account = Account.construct()
+                account.status = Code("active")
+                account.identifier = [Identifier(type=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-identifier-type"),code=Code("localVn"))]),system=Uri(f"https://terms.sil-th.org/hcode/5/{row.hospital_code}/VN"), value=String(matched.row_3opd.sequence))]
+                account.subject = [Reference(reference=patient.relative_path())]
+                account.servicePeriod = Period(start=matched.row_3opd.dateopd+matched.row_3opd.timeopd)
+                account.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-account-coverage-use"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-43plus-coverage-use"), code=Code(matched.row_3opd.uuc))]))]
+                account.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}")
+
+                # Encounter
+                encounter = Encounter.construct()
+                encounter.status = Code("finished")
+                encounter.identifier = [Identifier(type=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-identifier-type"),code=Code("localVn"))]),system=Uri(f"https://terms.sil-th.org/hcode/5/{row.hospital_code}/VN"), value=String(matched.row_3opd.sequence))]
+                encounter.class_fhir = Coding(system=Uri("http://terminology.hl7.org/CodeSystem/v3-ActCode"), code=Code("AMB"), display=String("ambulatory"))
+                encounter.subject = Reference(reference=patient.relative_path())
+                encounter.period = Period(start=matched.row_3opd.dateopd+matched.row_3opd.timeopd)
+                if isinstance(matched.row_1ins.htype,str):
+                    encounter.serviceProvider = Reference(reference=matched_org.relative_path(),
+                                                          extension=[Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-encounter-provider-type"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-provider-type"), code=Code(matched.row_1ins.htype), display=String("Main Contractor"))]))])
+                else:
+                    encounter.serviceProvider = Reference(reference=matched_org.relative_path())
+                encounter.account = [Reference(reference=account.relative_path())]
+                #encounter.diagnosis = [EncounterDiagnosis(condition=Reference(display=String(matched.row_3opd.icd10)))]
+                #encounter.hospitalization = EncounterHospitalization(admitSource=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-admit-source"), code=Code(matched.row_3opd.admit_source))]))
+                encounter.location = [EncounterLocation(location=Reference(identifier=Identifier(system=Uri(f"https://terms.sil-th.org/hcode/5/{row.hospital_code}/DepCode"), value=String(matched.row_3opd.clinic))))]
+                encounter.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-encounter-service-type-th"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-service-type-th"), code=Code(matched.row_3opd.optype), display=String("OP บัตรตัวเอง"))]))]
+                encounter.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}")
+            break
+
+    #bundle_cycler(patients_dict.values(), processed_results)
+
     return processed_results

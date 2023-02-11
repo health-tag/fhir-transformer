@@ -18,6 +18,7 @@ def send_singletype_bundle(fhir_resources: Iterable[FHIRResource], processed_res
     processed_results.append(post_bundle_to_fhir_server(bundle))
 
 
+
 def bundle_cycler(fhir_resources: Iterable[FHIRResource], processed_results: list[BundleResult]):
     resource_name = next(iter(fhir_resources)).resourceType
     cycle = 0

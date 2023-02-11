@@ -11,6 +11,7 @@ jsonpickle = "*"
 watchdog = "*"
 python-dotenv = "*"
 httpx = "*"
+"fhir.resources" = "*"
 
 [dev-packages]
 
