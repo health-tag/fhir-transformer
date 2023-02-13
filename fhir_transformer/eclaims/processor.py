@@ -3,11 +3,14 @@ from dataclasses import dataclass
 from os import PathLike
 
 import numpy as np
+from fhir.resources.claim import Claim, ClaimInsurance
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coverage import Coverage, CoverageClass
-from fhir.resources.fhirtypes import Id, Code, String, ExtensionType, Uri
+from fhir.resources.fhirtypes import Id, Code, String, ExtensionType, Uri, Boolean, Decimal
 from fhir.resources.humanname import HumanName
 from fhir.resources.extension import Extension
+from fhir.resources.money import Money
+from fhir.resources.servicerequest import ServiceRequest
 # from fhir_transformer.FHIR.Account import AccountBuilder
 # from fhir_transformer.FHIR.Coverage import CoverageBuilder
 # from fhir_transformer.FHIR.MedicationDispense import MedicationDispenseBuilder
@@ -202,6 +205,38 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                 encounter.location = [EncounterLocation(location=Reference(identifier=Identifier(system=Uri(f"https://terms.sil-th.org/hcode/5/{row.hospital_code}/DepCode"), value=String(matched.row_3opd.clinic))))]
                 encounter.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-encounter-service-type-th"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-service-type-th"), code=Code(matched.row_3opd.optype), display=String("OP บัตรตัวเอง"))]))]
                 encounter.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}")
+
+                # ServiceRequest
+                if matched.row_4orf is not None:
+                    service_request = ServiceRequest.construct()
+                    service_request.status = Code("completed")
+                    service_request.intent = Code("order")
+                    service_request.code = CodeableConcept(coding=[Coding(system=Uri("http://snomed.info/sct"), code=Code("3457005"), display=String("Patient referral"))])
+                    service_request.subject = Reference(reference=patient.relative_path())
+                    service_request.encounter = Reference(reference=encounter.relative_path())
+                    service_request.performer = [Reference(reference=matched_org.relative_path())]
+                    service_request.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-sr")
+                service_request.code = CodeableConcept(coding=[Coding(system=Uri("http://snomed.info/sct"), code=Code("3457005"), display=String("Patient referral"))])
+
+                # Condition
+
+                # Procedure
+
+                # Claim (11,12)
+
+                # Claim (16)
+                if matched.row_16dru is not None:
+                    drug_claim = Claim.construct()
+                    drug_claim.status = Code("active")
+                    drug_claim.type = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/claim-type"), code=Code("institutional"))])
+                    drug_claim.use = Code("claim")
+                    drug_claim.patient = Reference(reference=patient.relative_path())
+                    drug_claim.created = String(matched.row_16dru.service_date)
+                    drug_claim.provider = Reference(reference=matched_org.relative_path())
+                    drug_claim.priority = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/processpriority"), code=Code("normal"))])
+                    if coverage is not None:
+                        drug_claim.insurance = [ClaimInsurance(sequence=1,focal=Boolean(True), coverage=Reference(reference=coverage.relative_path()),preAuthRef=[String(matched.row_16dru.pa_no)])]
+                    drug_claim.total = Money(value=Decimal(matched.row_16dru.total_amount), currency=Code("THB"))
             break
 
     #bundle_cycler(patients_dict.values(), processed_results)

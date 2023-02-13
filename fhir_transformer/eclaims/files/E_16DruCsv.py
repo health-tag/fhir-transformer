@@ -30,6 +30,7 @@ class DruCsvRow:
     """unit"""
     unit_pack: str
     """unit_pack"""
+    pa_no:str
     sequence: str
     """seq"""
     use_status: str
@@ -68,6 +69,7 @@ def open_dru_csv(file_path: PathLike) -> list[DruCsvRow]:
                                drug_id=row["did"],
                                drug_name=row["didname"],
                                amount=row["amount"],
+                               pa_no=row["pa_no"],
                                drug_id24=row["didstd"],
                                unit=row["unit"],
                                unit_pack=row["unit_pack"],
