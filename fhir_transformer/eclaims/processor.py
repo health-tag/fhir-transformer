@@ -3,13 +3,15 @@ from dataclasses import dataclass
 from os import PathLike
 
 import numpy as np
-from fhir.resources.claim import Claim, ClaimInsurance
+from fhir.resources.claim import Claim, ClaimInsurance, ClaimItem
 from fhir.resources.codeableconcept import CodeableConcept
 from fhir.resources.coverage import Coverage, CoverageClass
 from fhir.resources.fhirtypes import Id, Code, String, ExtensionType, Uri, Boolean, Decimal
 from fhir.resources.humanname import HumanName
 from fhir.resources.extension import Extension
+from fhir.resources.medicationrequest import MedicationRequest
 from fhir.resources.money import Money
+from fhir.resources.quantity import Quantity
 from fhir.resources.servicerequest import ServiceRequest
 # from fhir_transformer.FHIR.Account import AccountBuilder
 # from fhir_transformer.FHIR.Coverage import CoverageBuilder
@@ -224,8 +226,8 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
 
                 # Claim (11,12)
 
-                # Claim (16)
                 if matched.row_16dru is not None:
+                    # Claim (16)
                     drug_claim = Claim.construct()
                     drug_claim.status = Code("active")
                     drug_claim.type = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/claim-type"), code=Code("institutional"))])
@@ -237,6 +239,20 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     if coverage is not None:
                         drug_claim.insurance = [ClaimInsurance(sequence=1,focal=Boolean(True), coverage=Reference(reference=coverage.relative_path()),preAuthRef=[String(matched.row_16dru.pa_no)])]
                     drug_claim.total = Money(value=Decimal(matched.row_16dru.total_amount), currency=Code("THB"))
+                    drug_claim.item = [ClaimItem(sequence=1, productOrService=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))], text=String(matched.row_16dru.drug_name)), quantity=Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit)),serviceDate=String(matched.row_16dru.service_date), encounter=Reference(reference=encounter.relative_path()) ,unitPrice=Money(value=Decimal(matched.row_16dru.drug_price), currency=Code("THB")), net=Money(value=Decimal(matched.row_16dru.total), currency=Code("THB")))]
+                    drug_claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-24-{matched.row_16dru.drug_id24}")
+                    # MedicationRequest
+                    medication_request = MedicationRequest.construct()
+                    medication_request.status = Code("completed")
+                    medication_request.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-medicationrequest-med-approved-no"), valueString=String(matched.row_16dru.pa_no))]
+                    if(isinstance(matched.row_16dru.drug_remark,str)):
+                        medication_request.extension.append(Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-medicationrequest-ned-criteria"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-medication-ned-criteria"), code=Code(matched.row_16dru.drug_remark), display=String("เกิดอาการไม่พึงประสงค์จากยาหรือแพ้ยาที่สามารถใช้ได้ในบัญชียาหลักแห่งชาติ") )])))
+                    medication_request.category = CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-medication-category"), code=Code(matched.row_16dru.use_status), display=String("ใช้ในโรงพยาบาล"))])
+                    medication_request.subject = Reference(reference=patient.relative_path())
+                    medication_request.encounter = Reference(reference=encounter.relative_path())
+                    medication_request.authoredOn = String(matched.row_16dru.service_date)
+                    medication_request.dosageInstruction = [DosageInstruction(text=String(matched.row_16dru.drug_name), timing=Timing(event=[String(matched.row_16dru.service_date)]), doseAndRate=[DosageDoseAndRate(doseQuantity=Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit)))] )]
+                    medication_request.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-24-{matched.row_16dru.drug_id24}")
             break
 
     #bundle_cycler(patients_dict.values(), processed_results)

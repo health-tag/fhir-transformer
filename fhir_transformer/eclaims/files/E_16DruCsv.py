@@ -25,6 +25,7 @@ class DruCsvRow:
     amount: str
     """amount"""
     drug_id24: str
+    drug_remark: str
     """didstd"""
     unit: str
     """unit"""
@@ -68,9 +69,12 @@ def open_dru_csv(file_path: PathLike) -> list[DruCsvRow]:
                                service_date=row["date_serv"],
                                drug_id=row["did"],
                                drug_name=row["didname"],
+                               drug_remark=row["didname"],
                                amount=row["amount"],
                                pa_no=row["pa_no"],
                                drug_id24=row["didstd"],
+                               drug_price=row["drugprice"],
+                               total=row["total"],
                                unit=row["unit"],
                                unit_pack=row["unit_pack"],
                                sequence=row["seq"],
