@@ -13,6 +13,8 @@ class ChtCsvRow:
     hospital_number: str
     citizen_id: str
     date: str
+    total:str
+    paid:str
     patient_type:str
     sequence:str
 
@@ -25,5 +27,7 @@ def open_cht_csv(file_path: PathLike) -> list[ChtCsvRow]:
                                hospital_number=row["hn"],
                                citizen_id=row["person_id"],
                                date=row["date"],
+                               total=row["total"],
+                               paid=row["paid"],
                                patient_type=row["pttype"]))
     return items
