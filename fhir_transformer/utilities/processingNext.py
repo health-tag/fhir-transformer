@@ -39,7 +39,11 @@ def send_singletype_bundle(fhir_resources: Iterable[FHIRResourceModel], processe
 
 
 def bundle_cycler(fhir_resources: Iterable[FHIRResourceModel], processed_results: list[BundleResult]):
-    next_item = next(iter(fhir_resources))
+    next_item = None
+    try:
+        next_item = next(iter(fhir_resources))
+    except StopIteration:
+        pass
     if next_item is None:
         return
     resource_name = next_item.resource_type
