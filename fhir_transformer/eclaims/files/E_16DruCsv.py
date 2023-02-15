@@ -25,8 +25,11 @@ class DruCsvRow:
     amount: str
     """amount"""
     drug_id24: str
-    drug_remark: str
     """didstd"""
+    drug_remark: str
+    drug_price: str
+    total: str
+
     unit: str
     """unit"""
     unit_pack: str
@@ -53,8 +56,8 @@ class DruCsvRow:
     11 DENTAL (ทันตกรรม)
     12 OTHER (อื่นๆ
     """
-#hcode|hn|an|clinic|person_id|date_serv|did|didname|amount|drugpric|drugcost|didstd|unit|unit_pack|seq|drugremark|pa_no|totcopay|use_status|total
-#11218|651218347||0011|1842228343492|20220912|D0000910|Guaifenesin 200 mg tab|20.00|1.0|0.24|101124000014203120381144|เม็ด||065156262|||0.00|2|20.00
+#hcode|hn       |an|clinic|person_id    |date_serv|did     |didname               |amount|drugpric|drugcost|didstd                  |unit|unit_pack|seq       |drugremark|pa_no|totcopay|use_status|total
+#11218|651218347|  |0011  |1842228343492|20220912 |D0000910|Guaifenesin 200 mg tab|20.00 |1.0     |0.24    |101124000014203120381144|เม็ด  |         |065156262|           |     |0.00    |2         |20.00
 
 def open_dru_csv(file_path: PathLike) -> list[DruCsvRow]:
     df = pd.read_csv(file_path, encoding="utf8", delimiter="|",dtype=str)
@@ -73,7 +76,7 @@ def open_dru_csv(file_path: PathLike) -> list[DruCsvRow]:
                                amount=row["amount"],
                                pa_no=row["pa_no"],
                                drug_id24=row["didstd"],
-                               drug_price=row["drugprice"],
+                               drug_price=row["drugpric"],
                                total=row["total"],
                                unit=row["unit"],
                                unit_pack=row["unit_pack"],

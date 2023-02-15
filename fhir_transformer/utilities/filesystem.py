@@ -197,6 +197,8 @@ def run_eclaims_folder(folder_path: Path):
                     _6oop_path = file
                 if "cht" in file.name.lower():
                     _11cht_path = file
+                if "cha" in file.name.lower():
+                    _12cha_path = file
                 if "dru" in file.name.lower():
                     _16dru_path = file
 
@@ -204,5 +206,5 @@ def run_eclaims_folder(folder_path: Path):
                 print("Requires all of ins pat opd orf odx oop cht dru files")
                 return
             print(f"Processing {_1ins_path.name} {_2pat_path.name} {_3opd_path.name} {_4orf_path.name} {_5odx_path.name} {_6oop_path.name} {_11cht_path.name} {_16dru_path.name}")
-            eclaims_process(results,_1ins_path=str(_1ins_path), _2pat_path=str(_2pat_path), _3opd_path=str(_3opd_path), _4orf_path=str(_4orf_path), _5odx_path=str(_5odx_path), _6oop_path=str(_6oop_path), _11cht_path=str(_11cht_path), _16dru_path=str(_16dru_path))
+            eclaims_process(results,_1ins_path=str(_1ins_path), _2pat_path=str(_2pat_path), _3opd_path=str(_3opd_path), _4orf_path=str(_4orf_path), _5odx_path=str(_5odx_path), _6oop_path=str(_6oop_path), _11cht_path=str(_11cht_path),_12cha_path=str(_12cha_path), _16dru_path=str(_16dru_path))
             return

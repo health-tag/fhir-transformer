@@ -292,41 +292,34 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
 
                 if matched.row_16dru is not None:
                     # Claim (16)
-                    drug_claim = Claim.construct()
-                    drug_claim.status = Code("active")
+                    drug_claim = Claim.construct(created=String(matched.row_16dru.service_date), use = Code("claim"), status = Code("active"))
                     drug_claim.type = CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-identifier-type"), code=Code("localInvNo"), display=String("เลขที่อ้างอิงใบแจ้งหนี้ของหน่วยบริการ"))])
-                    drug_claim.use = Code("claim")
                     drug_claim.patient = Reference(reference=patient.relative_path())
-                    drug_claim.created = String(matched.row_16dru.service_date)
                     drug_claim.provider = Reference(reference=matched_org.relative_path())
                     drug_claim.priority = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/processpriority"), code=Code("normal"))])
                     if coverage is not None:
                         drug_claim.insurance = [ClaimInsurance(sequence=1,focal=Boolean(True), coverage=Reference(reference=coverage.relative_path()),preAuthRef=[String(matched.row_16dru.pa_no)])]
-                    drug_claim.total = Money(value=Decimal(matched.row_16dru.total_amount), currency=Code("THB"))
-                    drug_claim.item = [ClaimItem(sequence=1, productOrService=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))], text=String(matched.row_16dru.drug_name)), quantity=Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit)),serviceDate=String(matched.row_16dru.service_date), encounter=Reference(reference=encounter.relative_path()) ,unitPrice=Money(value=Decimal(matched.row_16dru.drug_price), currency=Code("THB")), net=Money(value=Decimal(matched.row_16dru.total), currency=Code("THB")))]
+                    drug_claim.total = Money(value=Decimal(matched.row_16dru.total), currency=Code("THB"))
+                    drug_claim.item = [ClaimItem(sequence=1, productOrService=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))], text=String(matched.row_16dru.drug_name)), quantity=Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit)),servicedDate=String(matched.row_16dru.service_date), encounter=[Reference(reference=encounter.relative_path())] ,unitPrice=Money(value=Decimal(matched.row_16dru.drug_price), currency=Code("THB")), net=Money(value=Decimal(matched.row_16dru.total), currency=Code("THB")))]
                     drug_claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_16dru.sequence}-24-{matched.row_16dru.drug_id24}")
                     claims.append(drug_claim)
 
                     # MedicationDispense
-                    medication_dispense = MedicationDispense.construct()
-                    medication_dispense.status = Code("completed")
-                    medication_dispense.medicationCodeableConcept = CodeableConcept(text=String(matched.row_16dru.drug_name), coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))])
+                    medication_dispense = MedicationDispense.construct(status = Code("completed"),medicationCodeableConcept = CodeableConcept(text=String(matched.row_16dru.drug_name), coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))]))
                     medication_dispense.subject = Reference(reference=patient.relative_path())
                     medication_dispense.context = Reference(reference=encounter.relative_path())
-                    medication_dispense.performer = [MedicationDispensePerformerType(function=CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/medicationdispense-performer-function"), code=Code("finalchecker"))], actor=Reference(type=String("Practitioner"), identifier=Identifier(system=String("https://terms.sil-th.org/id/th-pharmacist-id"),value=String(matched.row_16dru.doctor_id)))))]
+                    #medication_dispense.performer = [MedicationDispensePerformerType(function=CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/medicationdispense-performer-function"), code=Code("finalchecker"))], actor=Reference(type=String("Practitioner"), identifier=Identifier(system=String("https://terms.sil-th.org/id/th-pharmacist-id"),value=String(matched.row_16dru.provider)))))]
                     medication_dispense.quantity = Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit))
                     medication_dispense.whenHandedOver = String(matched.row_16dru.service_date)
                     medication_dispense.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_16dru.sequence}-24-{matched.row_16dru.drug_id24}")
                     medication_dispenses.append(medication_dispense)
 
                     # MedicationRequest
-                    medication_request = MedicationRequest.construct()
-                    medication_request.status = Code("completed")
+                    medication_request = MedicationRequest.construct(status = Code("completed"),intent = Code("order"),medicationCodeableConcept = CodeableConcept(text=String(matched.row_16dru.drug_name), coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))]))
                     medication_request.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-medicationrequest-med-approved-no"), valueString=String(matched.row_16dru.pa_no))]
                     if(isinstance(matched.row_16dru.drug_remark,str)):
                         medication_request.extension.append(Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-medicationrequest-ned-criteria"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-medication-ned-criteria"), code=Code(matched.row_16dru.drug_remark), display=String("เกิดอาการไม่พึงประสงค์จากยาหรือแพ้ยาที่สามารถใช้ได้ในบัญชียาหลักแห่งชาติ") )])))
-                    medication_request.category = CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-medication-category"), code=Code(matched.row_16dru.use_status), display=String("ใช้ในโรงพยาบาล"))])
-                    medication_request.medicationCodeableConcept = CodeableConcept(text=String(matched.row_16dru.drug_name), coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))])
+                    medication_request.category = [CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-medication-category"), code=Code(matched.row_16dru.use_status), display=String("ใช้ในโรงพยาบาล"))])]
                     medication_request.subject = Reference(reference=patient.relative_path())
                     medication_request.encounter = Reference(reference=encounter.relative_path())
                     medication_request.authoredOn = String(matched.row_16dru.service_date)
