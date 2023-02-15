@@ -147,10 +147,21 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
         o.id = Id(f"hcode-{hospital_code}")
         organizations.append(o)
     organizations_dict = dict(zip(unique_hosp_code, organizations))
-    #send_singletype_bundle(organizations, processed_results)
+    send_singletype_bundle(organizations, processed_results)
+    # Dictionary
+    patients_dict: dict[str, Patient] = dict()
+    coverages: list[Coverage] = list()
+    accounts: list[Account] = list()
+    encounters: list[Encounter] = list()
+    service_requests: list[ServiceRequest] = list()
+    conditions: list[Condition] = list()
+    procedures: list[Procedure] = list()
+    claims: list[Claim] = list()
+    medication_dispenses: list[MedicationDispense] = list()
+    medication_requests: list[MedicationRequest] = list()
+
 
     # Patient
-    patients_dict: dict[str, Patient] = dict()
     for row in _2pat_rows:
         patient: Patient = Patient.construct()
         patient.identifier = [
@@ -184,7 +195,8 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                          Extension(url=Uri("type"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-meta-provider-type-coverage"), code=Code("primary"), display=String("สถานบริการหลัก"))])),
                          Extension(url=Uri("provider"), valueIdentifier=Identifier(system=Uri("https://terms.sil-th.org/id/th-moph-hcode"), value=String(matched.row_1ins.main_hospital_code)))
                     ])]
-                coverage.id = Id(f"cid-{row.citizen_id}")
+                coverage.id = Id(f"cid-{row.citizen_id}-vn-{sequence}")
+                coverages.append(coverage)
 
             if matched.row_3opd is not None:
                 # Account
@@ -195,6 +207,7 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                 account.servicePeriod = Period(start=matched.row_3opd.dateopd+matched.row_3opd.timeopd)
                 account.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-account-coverage-use"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-43plus-coverage-use"), code=Code(matched.row_3opd.uuc))]))]
                 account.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}")
+                accounts.append(account)
 
                 # Encounter
                 encounter = Encounter.construct()
@@ -214,6 +227,7 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                 encounter.location = [EncounterLocation(location=Reference(identifier=Identifier(system=Uri(f"https://terms.sil-th.org/hcode/5/{row.hospital_code}/DepCode"), value=String(matched.row_3opd.clinic))))]
                 encounter.extension = [Extension(url=Uri("https://fhir-ig.sil-th.org/mophpc/StructureDefinition/ex-encounter-service-type-th"), valueCodeableConcept=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-eclaim-service-type-th"), code=Code(matched.row_3opd.optype), display=String("OP บัตรตัวเอง"))]))]
                 encounter.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}")
+                encounters.append(encounter)
 
                 # ServiceRequest
                 if matched.row_4orf is not None:
@@ -224,9 +238,9 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     service_request.subject = Reference(reference=patient.relative_path())
                     service_request.encounter = Reference(reference=encounter.relative_path())
                     service_request.performer = [Reference(reference=matched_org.relative_path())]
-                    service_request.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-sr")
-                service_request.code = CodeableConcept(coding=[Coding(system=Uri("http://snomed.info/sct"), code=Code("3457005"), display=String("Patient referral"))])
-
+                    service_request.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_4orf.sequence}-sr")
+                    service_request.code = CodeableConcept(coding=[Coding(system=Uri("http://snomed.info/sct"), code=Code("3457005"), display=String("Patient referral"))])
+                    service_requests.append(service_request)
                 # Condition
                 if matched.row_5odx is not None:
                     condition = Condition.construct()
@@ -235,7 +249,8 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     condition.code = CodeableConcept(coding=[Coding(system=Uri("http://hl7.org/fhir/sid/icd-10"), code=Code(matched.row_5odx.diagnosis_icd10))])
                     condition.subject = Reference(reference=patient.relative_path())
                     condition.encounter = Reference(reference=encounter.relative_path())
-                    condition.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-cdx")
+                    condition.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_5odx.sequence}-cdx")
+                    conditions.append(condition)
                 # Procedure
                 if matched.row_6oop is not None:
                     procedure = Procedure.construct()
@@ -247,10 +262,10 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     procedure.encounter = Reference(reference=encounter.relative_path())
                     procedure.performedDateTime = matched.row_6oop.dateopd
                     procedure.performer = [ProcedurePerformer(actor=Reference(type=Uri("Practitioner"), identifier=Identifier(system=Uri(f"https://terms.sil-th.org/id/th-doctor-id"), value=String(matched.row_6oop.dropid))))]
-                    procedure.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-proc")
-
+                    procedure.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_6oop.sequence}-proc")
+                    procedures.append(procedure)
                 # Claim (11,12)
-                if matched.row_1ins is not None and matched.row_12cha is not None:
+                if matched.row_11cht is not None and matched.row_12cha is not None:
                     claim = Claim.construct()
                     claim.status = Code("active")
                     claim.extension = [
@@ -265,14 +280,16 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     claim.type = CodeableConcept(c0oding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/claim-type"), code=Code("institutional"))])
                     claim.use = Code("claim")
                     claim.patient = Reference(reference=patient.relative_path())
-                    claim.created = String(matched.row_11cht.invdate)
+                    claim.created = String(matched.row_11cht.date)
                     claim.provider = Reference(reference=matched_org.relative_path())
                     claim.priority = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/processpriority"), code=Code("normal"))])
                     #claim.supportingInfo = [ClaimSupportingInfo(sequence=1, )]
                     claim.insurance = [ClaimInsurance(sequence=1, focal=Boolean(True), coverage=Reference(reference=coverage.relative_path()))]
                     claim.total = Money(value=Decimal(matched.row_11cht.total), currency=Code("THB"))
                     claim.item = [ClaimItem(sequence=1,)]
-                    claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-claim")
+                    claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_11cht.sequence}-claim")
+                    claims.append(claim)
+
                 if matched.row_16dru is not None:
                     # Claim (16)
                     drug_claim = Claim.construct()
@@ -287,7 +304,9 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                         drug_claim.insurance = [ClaimInsurance(sequence=1,focal=Boolean(True), coverage=Reference(reference=coverage.relative_path()),preAuthRef=[String(matched.row_16dru.pa_no)])]
                     drug_claim.total = Money(value=Decimal(matched.row_16dru.total_amount), currency=Code("THB"))
                     drug_claim.item = [ClaimItem(sequence=1, productOrService=CodeableConcept(coding=[Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-local-drug-code"), code=Code(matched.row_16dru.drug_id)),Coding(system=Uri("https://terms.sil-th.org/CodeSystem/cs-th-24drug"), code=Code(matched.row_16dru.drug_id24))], text=String(matched.row_16dru.drug_name)), quantity=Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit)),serviceDate=String(matched.row_16dru.service_date), encounter=Reference(reference=encounter.relative_path()) ,unitPrice=Money(value=Decimal(matched.row_16dru.drug_price), currency=Code("THB")), net=Money(value=Decimal(matched.row_16dru.total), currency=Code("THB")))]
-                    drug_claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-24-{matched.row_16dru.drug_id24}")
+                    drug_claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_16dru.sequence}-24-{matched.row_16dru.drug_id24}")
+                    claims.append(drug_claim)
+
                     # MedicationDispense
                     medication_dispense = MedicationDispense.construct()
                     medication_dispense.status = Code("completed")
@@ -297,7 +316,9 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     medication_dispense.performer = [MedicationDispensePerformerType(function=CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/medicationdispense-performer-function"), code=Code("finalchecker"))], actor=Reference(type=String("Practitioner"), identifier=Identifier(system=String("https://terms.sil-th.org/id/th-pharmacist-id"),value=String(matched.row_16dru.doctor_id)))))]
                     medication_dispense.quantity = Quantity(value=Decimal(matched.row_16dru.amount), unit=String(matched.row_16dru.unit))
                     medication_dispense.whenHandedOver = String(matched.row_16dru.service_date)
-                    medication_dispense.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-24-{matched.row_16dru.drug_id24}-md")
+                    medication_dispense.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_16dru.sequence}-24-{matched.row_16dru.drug_id24}")
+                    medication_dispenses.append(medication_dispense)
+
                     # MedicationRequest
                     medication_request = MedicationRequest.construct()
                     medication_request.status = Code("completed")
@@ -309,7 +330,8 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     medication_request.subject = Reference(reference=patient.relative_path())
                     medication_request.encounter = Reference(reference=encounter.relative_path())
                     medication_request.authoredOn = String(matched.row_16dru.service_date)
-                    medication_request.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-24-{matched.row_16dru.drug_id24}-mr")
+                    medication_request.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_16dru.sequence}-24-{matched.row_16dru.drug_id24}")
+                    medication_requests.append(medication_request)
             break
 
     #bundle_cycler(patients_dict.values(), processed_results)
