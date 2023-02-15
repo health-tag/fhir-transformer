@@ -171,7 +171,7 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
         ]
         patient.name = [HumanName(prefix=[String(row.title)], given=[String(row.name)], family=String(row.surname),
                                   text=String(f"{row.title} {row.name} {row.surname}"))]
-        patient.gender = Code("M" if row.gender_number == 1 else "F")
+        patient.gender = Code("male" if row.gender_number == 1 else "female")
         matched_org = organizations_dict[row.hospital_code]
         patient.managingOrganization = Reference(reference=matched_org.relative_path())
         patient.id = Id(f"cid-{row.citizen_id}")

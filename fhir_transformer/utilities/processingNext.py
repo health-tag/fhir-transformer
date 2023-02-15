@@ -39,7 +39,10 @@ def send_singletype_bundle(fhir_resources: Iterable[FHIRResourceModel], processe
 
 
 def bundle_cycler(fhir_resources: Iterable[FHIRResourceModel], processed_results: list[BundleResult]):
-    resource_name = next(iter(fhir_resources)).resource_type
+    next_item = next(iter(fhir_resources))
+    if next_item is None:
+        return
+    resource_name = next_item.resource_type
     cycle = 0
     cycle_entries = list()
     print(f"⌚ Convert {resource_name} to FHIR Bundle entries at {datetime.now()}")
