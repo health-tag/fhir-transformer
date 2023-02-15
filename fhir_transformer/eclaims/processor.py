@@ -5,6 +5,7 @@ from os import PathLike
 import numpy as np
 from fhir.resources.claim import Claim, ClaimInsurance, ClaimItem,ClaimSupportingInfo
 from fhir.resources.codeableconcept import CodeableConcept
+from fhir.resources.condition import Condition
 from fhir.resources.coverage import Coverage, CoverageClass
 from fhir.resources.fhirtypes import Id, Code, String, ExtensionType, Uri, Boolean, Decimal, DosageType, \
     MedicationDispensePerformerType
@@ -13,6 +14,7 @@ from fhir.resources.extension import Extension
 from fhir.resources.medicationdispense import MedicationDispense
 from fhir.resources.medicationrequest import MedicationRequest
 from fhir.resources.money import Money
+from fhir.resources.procedure import Procedure, ProcedurePerformer
 from fhir.resources.quantity import Quantity
 from fhir.resources.servicerequest import ServiceRequest
 # from fhir_transformer.FHIR.Account import AccountBuilder
@@ -31,13 +33,14 @@ from fhir.resources.account import Account
 from fhir.resources.encounter import Encounter, EncounterLocation, EncounterDiagnosis, EncounterHospitalization
 
 from fhir_transformer.eclaims.files.E_11ChtCsv import open_cht_csv, ChtCsvRow
+from fhir_transformer.eclaims.files.E_12ChaCsv import open_cha_csv, ChaCsvRow
 from fhir_transformer.eclaims.files.E_3OpdCsv import open_opd_csv, OpdCsvRow
 from fhir_transformer.eclaims.files.E_4OrfCsv import open_orf_csv, OrfCsvRow
 from fhir_transformer.eclaims.files.E_16DruCsv import open_dru_csv, DruCsvRow
 from fhir_transformer.eclaims.files.E_1InsCsv import open_ins_csv, InsCsvRow
 from fhir_transformer.eclaims.files.E_2PatCsv import open_pat_csv, PatCsvRow
 from fhir_transformer.eclaims.files.E_5OdxCsv import open_odx_csv, OdxCsvRow
-from fhir_transformer.eclaims.files.E_6OopCsv import open_oop_csv
+from fhir_transformer.eclaims.files.E_6OopCsv import open_oop_csv, OopCsvRow
 from fhir_transformer.models.result import BundleResult
 from fhir_transformer.utilities.processingNext import send_singletype_bundle, bundle_cycler
 from typing import Optional
@@ -50,14 +53,15 @@ class JoinedOpd:
     row_3opd: Optional[OpdCsvRow] = None
     row_4orf: Optional[OrfCsvRow] = None
     row_5odx: Optional[OdxCsvRow] = None
-    row_6oop: Optional[OdxCsvRow] = None
+    row_6oop: Optional[OopCsvRow] = None
     row_11cht: Optional[ChtCsvRow] = None
+    row_12cha: Optional[ChaCsvRow] = None
     row_16dru: Optional[DruCsvRow] = None
 
 
 def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2pat_path: PathLike, _3opd_path: PathLike,
                 _4orf_path: PathLike,
-                _5odx_path: PathLike, _6oop_path: PathLike, _11cht_path: PathLike, _16dru_path: PathLike):
+                _5odx_path: PathLike, _6oop_path: PathLike, _11cht_path: PathLike, _12cha_path: PathLike,_16dru_path: PathLike):
     _1ins_rows = open_ins_csv(_1ins_path)
     _2pat_rows = open_pat_csv(_2pat_path)
     _3opd_rows = open_opd_csv(_3opd_path)
@@ -66,6 +70,7 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
     _6oop_rows = open_oop_csv(_6oop_path)
 
     _11cht_rows = open_cht_csv(_11cht_path)
+    _12cha_rows = open_cha_csv(_12cha_path)
     _16dru_rows = open_dru_csv(_16dru_path)
 
     joined_opd_files: dict[str, JoinedOpd] = dict()
@@ -223,8 +228,26 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                 service_request.code = CodeableConcept(coding=[Coding(system=Uri("http://snomed.info/sct"), code=Code("3457005"), display=String("Patient referral"))])
 
                 # Condition
-
+                if matched.row_5odx is not None:
+                    condition = Condition.construct()
+                    condition.clinicalStatus = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/condition-clinical"), code=Code("active"))])
+                    condition.category = [CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/condition-category"), code=Code("encounter-diagnosis"), display=String("Encounter Diagnosis"))])]
+                    condition.code = CodeableConcept(coding=[Coding(system=Uri("http://hl7.org/fhir/sid/icd-10"), code=Code(matched.row_5odx.diagnosis_icd10))])
+                    condition.subject = Reference(reference=patient.relative_path())
+                    condition.encounter = Reference(reference=encounter.relative_path())
+                    condition.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-cdx")
                 # Procedure
+                if matched.row_6oop is not None:
+                    procedure = Procedure.construct()
+                    procedure.status = Code("completed")
+                    procedure.identifier = [Identifier(system=Uri(f"https://sil-th.org/fhir/Id/service-id"), value=String(matched.row_3opd.sequence))]
+                    procedure.code = CodeableConcept(coding=[Coding(system=Uri("http://hl7.org/fhir/sid/icd-9-cm"), code=Code(matched.row_6oop.operation), display=String("Patient referral"))])
+                    procedure.category = CodeableConcept(coding=[Coding(system=Uri("http://terminology.hl7.org/CodeSystem/procedure-category"), code=Code("exam"), display=String("Exam"))])
+                    procedure.subject = Reference(reference=patient.relative_path())
+                    procedure.encounter = Reference(reference=encounter.relative_path())
+                    procedure.performedDateTime = matched.row_6oop.dateopd
+                    procedure.performer = [ProcedurePerformer(actor=Reference(type=Uri("Practitioner"), identifier=Identifier(system=Uri(f"https://terms.sil-th.org/id/th-doctor-id"), value=String(matched.row_6oop.dropid))))]
+                    procedure.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-proc")
 
                 # Claim (11,12)
                 if matched.row_1ins is not None and matched.row_12cha is not None:
@@ -248,7 +271,7 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     #claim.supportingInfo = [ClaimSupportingInfo(sequence=1, )]
                     claim.insurance = [ClaimInsurance(sequence=1, focal=Boolean(True), coverage=Reference(reference=coverage.relative_path()))]
                     claim.total = Money(value=Decimal(matched.row_11cht.total), currency=Code("THB"))
-                    claim.item = [ClaimItem()]
+                    claim.item = [ClaimItem(sequence=1,)]
                     claim.id = Id(f"cid-{row.citizen_id}-vn-{matched.row_3opd.sequence}-claim")
                 if matched.row_16dru is not None:
                     # Claim (16)
