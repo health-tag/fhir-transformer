@@ -334,6 +334,17 @@ def process_all(processed_results: list[BundleResult], _1ins_path: PathLike, _2p
                     medication_requests.append(medication_request)
             break
 
-    #bundle_cycler(patients_dict.values(), processed_results)
+    bundle_cycler(patients_dict.values(), processed_results)
+    bundle_cycler(coverages, processed_results)
+    bundle_cycler(accounts, processed_results)
+    bundle_cycler(encounters, processed_results)
+    bundle_cycler(service_requests, processed_results)
+    bundle_cycler(conditions, processed_results)
+    bundle_cycler(procedures, processed_results)
+    bundle_cycler(procedures, processed_results)
+    bundle_cycler(claims, processed_results)
+    bundle_cycler(medication_dispenses, processed_results)
+    bundle_cycler(medication_requests, processed_results)
+
 
     return processed_results
